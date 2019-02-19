@@ -1,0 +1,7 @@
+{
+    "input" : "scan_result/scan.json",
+    "output" : "output_build",
+    "reprojection" : {
+        "out" : "EPSG:4978"
+    }
+}
