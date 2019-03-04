@@ -1,35 +1,76 @@
-function startup()
-{
-    var viewer = new Cesium.Viewer('cesiumContainer', {
-        imageryProvider: Cesium.createTileMapServiceImageryProvider({
-            url: 'Assets/imagery/NaturalEarthII'
-        }),
-        // terrainProvider: Cesium.createWorldTerrain({ // Cesium ion account is expected for this
-        //     requestVertexNormals : true
-        // }),
-        baseLayerPicker: false,
-        geocoder: false
-    });
+var g_sceneData = null;
+var g_defaultElement = null;
+// testing
+var housedata = null;
 
-    var tileset_points_test = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
-        url: 'Assets/points/output_test_01/tileset.json'
+// object references
+var viewer = null;
+
+function loadSceneData()
+{
+    var req = new XMLHttpRequest();
+    req.addEventListener("load", function(evt){
+        processSceneData(req.responseText);
+    });
+    req.open("GET", "scene_data.json");
+    req.send();
+}
+
+function processSceneData(data)
+{
+    console.log("processSceneData()");
+    console.log(data);
+    var g_sceneData = JSON.parse(data);
+
+    for(var element of g_sceneData.elements)
+    {
+        if(element.type == "tileset")
+        {
+            // for elements already in 3D tiles format
+            loadElement(element);
+        }
+        else if(element.type == "geometry")
+        {
+            // for geometry defined manually
+            loadShapeData(element);
+        }
+        else
+        {
+            // unknown element type
+            console.log("Scene element with unknown type " + element.type + " encounted, skipping..");
+        }
+    }
+}
+
+function loadElement(description)
+{
+    var element = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
+        url: description.path
     }));
 
-    tileset_points_test.style = new Cesium.Cesium3DTileStyle({
-        pointSize : 4.0
-    });
+    // 20190304 - for now, first thing loaded will get camera focus
+    if(g_defaultElement == null)
+    {
+        g_defaultElement = element;
+    }
 
-    // enable this if Century data is present
-    // var tileset_century = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
-    //     url: 'Assets/points/century/tileset.json'
-    // }));
+    if(element.datatype == "points")
+    {
+        element.style = new Cesium.Cesium3DTileStyle({
+            pointSize : 4.0
+        });
+    }
 
-    tileset_century.allTilesLoaded.addEventListener(function() {
-        var centuryMarkerPosition = tileset_century.boundingSphere.center;
+    // element.allTilesLoaded.addEventListener(function() {
+    element.readyPromise.then(function(element){
+        var name = description.name;
+        var caption = (description.caption != undefined ? description.caption : description.name);
 
-        var centuryMarker = viewer.entities.add({
-            name : 'test marker2',
-            position : centuryMarkerPosition,
+        var markerPosition = element.boundingSphere.center;
+
+        var marker = viewer.entities.add({
+            name : name,
+            position : markerPosition,
             point : {
                 pixelSize : 8,
                 color : Cesium.Color.RED,
@@ -37,7 +78,7 @@ function startup()
                 outlineWidth : 2
             },
             label : {
-                text : 'Century',
+                text : caption,
                 font : '16pt Segoe UI',
                 style : Cesium.LabelStyle.FILL_AND_OUTLINE,
                 outlineWidth : 0.5,
@@ -45,27 +86,27 @@ function startup()
                 pixelOffset : new Cesium.Cartesian2(0, -9)
             }
         });
-    });
+    });    
+}
 
-    tileset_century.style = new Cesium.Cesium3DTileStyle({
-        pointSize : 4.0
+function loadShapeData(element)
+{
+    var req = new XMLHttpRequest();
+    req.addEventListener("load", function(evt){
+        processShapeData(req.responseText);
     });
+    req.open("GET", element.path);
+    req.send();
+}
 
-    // viewer.zoomTo(tileset_points_test);
-    viewer.zoomTo(tileset_century);
-
-    var testRegion = viewer.entities.add({
-        position: Cesium.Cartesian3.fromDegrees(119.4955547, -5.0835328),
-        ellipse: {
-            semiMinorAxis : 100000.0,
-            semiMajorAxis : 100000.0,
-            material : Cesium.Color.BLUE.withAlpha(0.1)
-        }
-    });
+function processShapeData(description)
+{
+    var geometry = JSON.parse(description);
+    var housedata = geometry;   // todo: remove this, probably won't be needed
 
     var i = 0;
 
-    for(var shape of housedata.shapes)
+    for(var shape of geometry.shapes)
     {
         i++;
         var degArr = [];
@@ -139,6 +180,26 @@ function startup()
         var translation = Cesium.Matrix4.fromTranslation(new Cesium.Cartesian3(0.0, 35.0, 0.0));
         Cesium.Matrix4.multiply(modelMatrix, translation, modelMatrix);
 
+        var testColours = [
+            [0.0, 0.0, 1.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 1.0, 1.0],
+            [1.0, 0.0, 0.0],
+            [1.0, 0.0, 1.0],
+            [1.0, 1.0, 0.0],
+            [1.0, 1.0, 1.0],
+            [0.5, 0.5, 1.0],
+            [0.5, 1.0, 0.5],
+            [0.5, 1.0, 1.0],
+            [1.0, 0.5, 0.5],
+            [1.0, 0.5, 1.0],
+            [1.0, 1.0, 0.5],
+            [0.5, 0.5, 0.5],
+        ];
+
+        var testColourIndex = Math.trunc(Math.random() * testColours.length);
+        var testColour = new Cesium.Color(testColours[testColourIndex][0], testColours[testColourIndex][1],testColours[testColourIndex][2])
+
         var highlight = viewer.scene.primitives.add(new Cesium.ClassificationPrimitive({
             geometryInstances: new Cesium.GeometryInstance({
                 geometry: shapeGeom,
@@ -148,6 +209,7 @@ function startup()
                 // modelMatrix : Cesium.Transforms.eastNorthUpToFixedFrame(origin),
                 // modelMatrix : modelMatrix,
                 attributes : {
+                    // color: Cesium.ColorGeometryInstanceAttribute.fromColor(new Cesium.Color(1.0, 0.0, 1.0, 0.5)),
                     color: Cesium.ColorGeometryInstanceAttribute.fromColor(new Cesium.Color(1.0, 0.0, 1.0, 0.5)),
                     show: new Cesium.ShowGeometryInstanceAttribute(true)
                 },
@@ -157,47 +219,34 @@ function startup()
             classificationType : Cesium.ClassificationType.CESIUM_3D_TILE
         }));
     }
+}
 
-    var testHouseVolume = viewer.entities.add({
-        polylineVolume : {
-            positions : Cesium.Cartesian3.fromDegreesArray([
-                119.4976785,
-                -5.0812537,
-                119.4976359,
-                -5.0812718,
-                119.497645,
-                -5.0813094,
-                119.4976624,
-                -5.0813555,
-                119.4977114,
-                -5.0813363,
-                119.4976785,
-                -5.0812537
-            ]),
-            material: Cesium.Color.RED,
-            shape: [new Cesium.Cartesian2(-5, -5),
-                    new Cesium.Cartesian2(5, -5),
-                    new Cesium.Cartesian2(5, 5),
-                    new Cesium.Cartesian2(-5, 5)]
-        }
+function startup()
+{
+    // create a Cesium viewer and load Earth data
+    viewer = new Cesium.Viewer('cesiumContainer', {
+        imageryProvider: Cesium.createTileMapServiceImageryProvider({
+            url: '../Assets/imagery/NaturalEarthII'
+        }),
+        // terrainProvider: Cesium.createWorldTerrain({ // Cesium ion account is expected for this
+        //     requestVertexNormals : true
+        // }),
+        baseLayerPicker: false,
+        geocoder: false
     });
 
-    var testMarker = viewer.entities.add({
-        name : 'test marker',
-        position : Cesium.Cartesian3.fromDegrees(119.4974811, -5.0815495),
-        point : {
-            pixelSize : 8,
-            color : Cesium.Color.RED,
-            outlineColor : Cesium.Color.WHITE,
-            outlineWidth : 2
-        },
-        label : {
-            text : 'Sample site',
-            font : '16pt Segoe UI',
-            style : Cesium.LabelStyle.FILL_AND_OUTLINE,
-            outlineWidth : 0.5,
-            verticalOrigin : Cesium.VerticalOrigin.BOTTOM,
-            pixelOffset : new Cesium.Cartesian2(0, -9)
+    // load all scene data
+    loadSceneData();
+
+    // look at the default element, this should be selected as part of the loading process
+    viewer.zoomTo(g_defaultElement);
+
+    var testRegion = viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(119.4955547, -5.0835328),
+        ellipse: {
+            semiMinorAxis : 100000.0,
+            semiMajorAxis : 100000.0,
+            material : Cesium.Color.BLUE.withAlpha(0.1)
         }
     });
 

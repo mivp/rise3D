@@ -1,0 +1,26 @@
+rise3d viewer data schema notes and definitions
+-----------------------------------------------
+
+[viewer/scene_data.json] : contains a list of all external files with visual elements, i.e. just about everything to view
+
+EXAMPLE:
+
+{
+    "elements" : [                                                              // root element, array of scene elements
+        {
+            "type" : "tileset",                                                 // "tileset": Cesium 3D Tiles format, "geometry": manually defined geometry, "file": external file, e.g. a mesh
+            "datatype" : "points",                                              // "points", "mesh", "shapes", others to follow..
+            "path" : "/Assets/points/sample/tileset.json",                      // path within web server hierarchy pointing to file to load
+            "name" : "sample_points",                                           // internal identifier (unique) for finding this object and connecting data to it
+            "caption" : "Mine location",                                        // optional - title or caption to show anywhere the name is displayed
+            "caption_offset" : [0, 0, 0]                                        // optional - offset vector in metres for hover captions in the 3D world
+        },
+        {
+            "type": "geometry",
+            "datatype" : "shapes",
+            "path" : "/Assets/shapes/building_shapes.json",
+            "name" : "buildings_data"
+        }
+    ]
+}
+
