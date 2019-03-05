@@ -224,20 +224,44 @@ function processShapeData(description)
 function startup()
 {
     // create a Cesium viewer and load Earth data
-    viewer = new Cesium.Viewer('cesiumContainer', {
-        imageryProvider: Cesium.createTileMapServiceImageryProvider({
-            url: '../Assets/imagery/NaturalEarthII'
-        }),
+    
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0ZDgyMmRiYS0zMjMyLTQxMzMtYTNiMC05ZmZiZTRkZWQ2YTQiLCJpZCI6ODMyMywic2NvcGVzIjpbImFzciIsImdjIl0sImlhdCI6MTU1MTc1MzAzNX0.wDKGdaNCaseIbASuOFeSRdXF-Ch4uGfMQdeVBKTCzNU';
+
+    var viewer = new Cesium.Viewer('cesiumContainer');
+
+    var imageryLayer = viewer.imageryLayers.addImageryProvider(
+        new Cesium.IonImageryProvider({ assetId: 3813 })
+    );
+
+    
+    //viewer = new Cesium.Viewer('cesiumContainer', {
+    //    imageryProvider: Cesium.createTileMapServiceImageryProvider({
+    //       url: '../Assets/imagery/NaturalEarthII'
+    //    }),
         // terrainProvider: Cesium.createWorldTerrain({ // Cesium ion account is expected for this
         //     requestVertexNormals : true
-        // }),
-        baseLayerPicker: false,
-        geocoder: false
-    });
+        //}),
+    //baseLayerPicker: false,
+    //    geocoder: false
+    //});
 
     // load all scene data
     loadSceneData();
-
+    /*
+    var kmlOptions = {
+    camera : viewer.scene.camera,
+    canvas : viewer.scene.canvas,
+    clampToGround : true
+    };
+// Load geocache points of interest from a KML file
+    var geocachePromise = Cesium.KmlDataSource.load('../assets/Suva_Short_listed_sites_12January2018.kmz', kmlOptions);
+    // Add geocache billboard entities to scene and style them
+    geocachePromise.then(function(dataSource) {
+    // Add the new data as entities to the viewer
+    viewer.dataSources.add(dataSource);
+    });
+    */
+    
     // look at the default element, this should be selected as part of the loading process
     viewer.zoomTo(g_defaultElement);
 
@@ -251,6 +275,7 @@ function startup()
     });
 
     var placeholderEntity = new Cesium.Entity();
+    
 
     viewer.screenSpaceEventHandler.setInputAction(function onLeftClick(movement){
         var feature = viewer.scene.pick(movement.position);
