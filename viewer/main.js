@@ -34,6 +34,10 @@ function processSceneData(data)
             // for geometry defined manually
             loadShapeData(element);
         }
+        else if(element.type == "file")
+        {
+            loadFile(element);
+        }
         else
         {
             // unknown element type
@@ -87,6 +91,24 @@ function loadElement(description)
             }
         });
     });    
+}
+
+function loadFile(element)
+{
+    if(element.datatype == "kml")
+    {
+        loadKML(element);
+    }
+}
+
+function loadKML(description)
+{
+    console.log("Loading KML/KMZ: " + new URL(description.path, window.location.href));
+    viewer.dataSources.add(Cesium.KmlDataSource.load(description.path),
+        {
+            camera: viewer.scene.camera,
+            canvas: viewer.scene.canvas
+        });
 }
 
 function loadShapeData(element)
@@ -225,12 +247,17 @@ function startup()
 {
     // create a Cesium viewer and load Earth data
     viewer = new Cesium.Viewer('cesiumContainer', {
-        imageryProvider: Cesium.createTileMapServiceImageryProvider({
-            url: '../Assets/imagery/NaturalEarthII'
-        }),
+        // imageryProvider: Cesium.createTileMapServiceImageryProvider({
+        //     url: '../Assets/imagery/NaturalEarthII'
+        // }),
         // terrainProvider: Cesium.createWorldTerrain({ // Cesium ion account is expected for this
         //     requestVertexNormals : true
         // }),
+        // imageryProvider: new Cesium.SingleTileImageryProvider(
+        //     {
+        //         url: '../Assets/imagery/NaturalEarthIII/1_earth_16k.jpg'
+        //     }
+        // ),
         baseLayerPicker: false,
         geocoder: false
     });

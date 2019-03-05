@@ -9,7 +9,7 @@ EXAMPLE:
     "elements" : [                                                              // root element, array of scene elements
         {
             "type" : "tileset",                                                 // "tileset": Cesium 3D Tiles format, "geometry": manually defined geometry, "file": external file, e.g. a mesh
-            "datatype" : "points",                                              // "points", "mesh", "shapes", others to follow..
+            "datatype" : "points",                                              // "points", "mesh", "shapes", "kml", others to follow..
             "path" : "/Assets/points/sample/tileset.json",                      // path within web server hierarchy pointing to file to load
             "name" : "sample_points",                                           // internal identifier (unique) for finding this object and connecting data to it
             "caption" : "Mine location",                                        // optional - title or caption to show anywhere the name is displayed
@@ -24,3 +24,11 @@ EXAMPLE:
     ]
 }
 
+external file support:
+
+    - "type" must be set to "file", then "datatype" can be:
+        - kml
+        - mesh (gltf format)
+        - more to come..
+
+KMZ files may need to be extracted (ZIP format) and loaded as KML due to cross-origin issues with the ZIP inflater
