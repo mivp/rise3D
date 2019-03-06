@@ -34,6 +34,10 @@ function processSceneData(data)
             // for geometry defined manually
             loadShapeData(element);
         }
+        else if(element.type == "file")
+        {
+            loadFile(element);
+        }
         else
         {
             // unknown element type
@@ -44,6 +48,7 @@ function processSceneData(data)
 
 function loadElement(description)
 {
+
     var element = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
         url: description.path
     }));
@@ -87,6 +92,24 @@ function loadElement(description)
             }
         });
     });    
+}
+
+function loadFile(element)
+{
+    if(element.datatype == "kml")
+    {
+        loadKML(element);
+    }
+}
+
+function loadKML(description)
+{
+    console.log("Loading KML/KMZ: " + new URL(description.path, window.location.href));
+    viewer.dataSources.add(Cesium.KmlDataSource.load(description.path),
+        {
+            camera: viewer.scene.camera,
+            canvas: viewer.scene.canvas
+        });
 }
 
 function loadShapeData(element)
@@ -221,18 +244,24 @@ function processShapeData(description)
     }
 }
 
+function ah_sandpit(viewer)
+{
+    viewer.dataSources.add(new Cesium.CzmlDataSource().load('../assets/simple.czml'))
+    
+}
+
 function startup()
 {
     // create a Cesium viewer and load Earth data
     
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0ZDgyMmRiYS0zMjMyLTQxMzMtYTNiMC05ZmZiZTRkZWQ2YTQiLCJpZCI6ODMyMywic2NvcGVzIjpbImFzciIsImdjIl0sImlhdCI6MTU1MTc1MzAzNX0.wDKGdaNCaseIbASuOFeSRdXF-Ch4uGfMQdeVBKTCzNU';
 
-    var viewer = new Cesium.Viewer('cesiumContainer');
+    viewer = new Cesium.Viewer('cesiumContainer');
 
+    // load imagery
     var imageryLayer = viewer.imageryLayers.addImageryProvider(
         new Cesium.IonImageryProvider({ assetId: 3813 })
     );
-
     
     //viewer = new Cesium.Viewer('cesiumContainer', {
     //    imageryProvider: Cesium.createTileMapServiceImageryProvider({
@@ -247,24 +276,13 @@ function startup()
 
     // load all scene data
     loadSceneData();
-    /*
-    var kmlOptions = {
-    camera : viewer.scene.camera,
-    canvas : viewer.scene.canvas,
-    clampToGround : true
-    };
-// Load geocache points of interest from a KML file
-    var geocachePromise = Cesium.KmlDataSource.load('../assets/Suva_Short_listed_sites_12January2018.kmz', kmlOptions);
-    // Add geocache billboard entities to scene and style them
-    geocachePromise.then(function(dataSource) {
-    // Add the new data as entities to the viewer
-    viewer.dataSources.add(dataSource);
-    });
-    */
-    
+
+
     // look at the default element, this should be selected as part of the loading process
     viewer.zoomTo(g_defaultElement);
-
+    
+    ah_sandpit(viewer);
+    
     var testRegion = viewer.entities.add({
         position: Cesium.Cartesian3.fromDegrees(119.4955547, -5.0835328),
         ellipse: {
