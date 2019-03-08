@@ -34,6 +34,10 @@ function processSceneData(data)
             // for geometry defined manually
             loadShapeData(element);
         }
+        else if(element.type == "file")
+        {
+            loadFile(element);
+        }
         else
         {
             // unknown element type
@@ -44,6 +48,7 @@ function processSceneData(data)
 
 function loadElement(description)
 {
+
     var element = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
         url: description.path
     }));
@@ -87,6 +92,24 @@ function loadElement(description)
             }
         });
     });    
+}
+
+function loadFile(element)
+{
+    if(element.datatype == "kml")
+    {
+        loadKML(element);
+    }
+}
+
+function loadKML(description)
+{
+    console.log("Loading KML/KMZ: " + new URL(description.path, window.location.href));
+    viewer.dataSources.add(Cesium.KmlDataSource.load(description.path),
+        {
+            camera: viewer.scene.camera,
+            canvas: viewer.scene.canvas
+        });
 }
 
 function loadShapeData(element)
@@ -223,26 +246,45 @@ function processShapeData(description)
     }
 }
 
+function ah_sandpit(viewer)
+{
+    viewer.dataSources.add(new Cesium.CzmlDataSource().load('../assets/simple.czml'))
+    
+}
+
 function startup()
 {
     // create a Cesium viewer and load Earth data
-    viewer = new Cesium.Viewer('cesiumContainer', {
-        imageryProvider: Cesium.createTileMapServiceImageryProvider({
-            url: '../Assets/imagery/NaturalEarthII'
-        }),
+    
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0ZDgyMmRiYS0zMjMyLTQxMzMtYTNiMC05ZmZiZTRkZWQ2YTQiLCJpZCI6ODMyMywic2NvcGVzIjpbImFzciIsImdjIl0sImlhdCI6MTU1MTc1MzAzNX0.wDKGdaNCaseIbASuOFeSRdXF-Ch4uGfMQdeVBKTCzNU';
+
+    viewer = new Cesium.Viewer('cesiumContainer');
+
+    // load imagery
+    var imageryLayer = viewer.imageryLayers.addImageryProvider(
+        new Cesium.IonImageryProvider({ assetId: 3813 })
+    );
+    
+    //viewer = new Cesium.Viewer('cesiumContainer', {
+    //    imageryProvider: Cesium.createTileMapServiceImageryProvider({
+    //       url: '../Assets/imagery/NaturalEarthII'
+    //    }),
         // terrainProvider: Cesium.createWorldTerrain({ // Cesium ion account is expected for this
         //     requestVertexNormals : true
-        // }),
-        baseLayerPicker: false,
-        geocoder: false
-    });
+        //}),
+    //baseLayerPicker: false,
+    //    geocoder: false
+    //});
 
     // load all scene data
     loadSceneData();
 
+
     // look at the default element, this should be selected as part of the loading process
     viewer.zoomTo(g_defaultElement);
-
+    
+    ah_sandpit(viewer);
+    
     var testRegion = viewer.entities.add({
         position: Cesium.Cartesian3.fromDegrees(119.4955547, -5.0835328),
         ellipse: {
@@ -253,6 +295,7 @@ function startup()
     });
 
     var placeholderEntity = new Cesium.Entity();
+    
 
     viewer.screenSpaceEventHandler.setInputAction(function onLeftClick(movement){
         var feature = viewer.scene.pick(movement.position);
