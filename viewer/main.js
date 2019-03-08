@@ -57,7 +57,7 @@ function loadElement(description)
     if(element.datatype == "points")
     {
         element.style = new Cesium.Cesium3DTileStyle({
-            pointSize : 4.0
+            pointSize : 8.0
         });
     }
 
@@ -198,11 +198,12 @@ function processShapeData(description)
         ];
 
         var testColourIndex = Math.trunc(Math.random() * testColours.length);
-        var testColour = new Cesium.Color(testColours[testColourIndex][0], testColours[testColourIndex][1],testColours[testColourIndex][2])
+        var testColour = new Cesium.Color(testColours[testColourIndex][0], testColours[testColourIndex][1],testColours[testColourIndex][2], 0.5);
 
         var highlight = viewer.scene.primitives.add(new Cesium.ClassificationPrimitive({
             geometryInstances: new Cesium.GeometryInstance({
                 geometry: shapeGeom,
+                id: shape.id,
                 // geometry : new Cesium.EllipsoidGeometry({
                 //     radii : new Cesium.Cartesian3(20.0, 20.0, 20.0)
                 // }),
@@ -210,7 +211,8 @@ function processShapeData(description)
                 // modelMatrix : modelMatrix,
                 attributes : {
                     // color: Cesium.ColorGeometryInstanceAttribute.fromColor(new Cesium.Color(1.0, 0.0, 1.0, 0.5)),
-                    color: Cesium.ColorGeometryInstanceAttribute.fromColor(new Cesium.Color(1.0, 0.0, 1.0, 0.5)),
+                    // color: Cesium.ColorGeometryInstanceAttribute.fromColor(new Cesium.Color(1.0, 0.0, 1.0, 0.5)),
+                    color: Cesium.ColorGeometryInstanceAttribute.fromColor(testColour),
                     show: new Cesium.ShowGeometryInstanceAttribute(true)
                 },
                 id: 'volume' + i.toString()
@@ -254,12 +256,12 @@ function startup()
 
     viewer.screenSpaceEventHandler.setInputAction(function onLeftClick(movement){
         var feature = viewer.scene.pick(movement.position);
-        if(!Cesium.defined(feature))
+        if(!Cesium.defined(feature) || feature.id == undefined)
         {
             viewer.selectedEntity = null;
             return;
         }
-        placeholderEntity.name = "A dwelling";
+        placeholderEntity.name = "Building: " + feature.id;
         viewer.selectedEntity = placeholderEntity;
         placeholderEntity.description = 'Number of occupants: TBA<br/>';
 

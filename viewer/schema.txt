@@ -12,7 +12,7 @@ EXAMPLE:
             "datatype" : "points",                                              // "points", "mesh", "shapes", others to follow..
             "path" : "/Assets/points/sample/tileset.json",                      // path within web server hierarchy pointing to file to load
             "name" : "sample_points",                                           // internal identifier (unique) for finding this object and connecting data to it
-            "caption" : "Mine location",                                        // optional - title or caption to show anywhere the name is displayed
+            "caption" : "Sample region",                                        // optional - title or caption to show anywhere the name is displayed
             "caption_offset" : [0, 0, 0]                                        // optional - offset vector in metres for hover captions in the 3D world
         },
         {
