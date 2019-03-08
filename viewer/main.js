@@ -155,7 +155,7 @@ function processShapeData(description)
         degArr.push(deg.longitude);
         degArr.push(deg.latitude);
 
-        console.log(degArr);
+        // console.log(degArr);
 
         var shapeVol = viewer.entities.add({
             polylineVolume : {
