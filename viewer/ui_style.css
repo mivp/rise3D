@@ -1,0 +1,79 @@
+#cesiumContainer
+{
+    z-index: 1;
+}
+
+#weatherReadout
+{
+    z-index: 10;
+    left: 150px;
+    top: 150px;
+    width: 250px;
+    height: 150px;
+    position: fixed;
+    color: #d0d0d0;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-size: 14px;
+    background: #303030;
+}
+
+#weather_readout_title
+{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+#weather_readout_description
+{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 15px;
+}
+
+#weather_readout_content
+{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 11px;
+}
+
+/* from Google for Material Icons font:
+
+https://google.github.io/material-design-icons/
+
+*/
+@font-face {
+    font-family: 'Material Icons';
+    font-style: normal;
+    font-weight: 400;
+    src: url(/Assets/fonts/MaterialIcons-Regular.eot); /* For IE6-8 */
+    src: local('Material Icons'),
+      local('MaterialIcons-Regular'),
+      url(/Assets/fonts/MaterialIcons-Regular.woff2) format('woff2'),
+      url(/Assets/fonts/MaterialIcons-Regular.woff) format('woff'),
+      url(/Assets/fonts/MaterialIcons-Regular.ttf) format('truetype');
+  }
+
+.material-icons {
+    font-family: 'Material Icons';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;  /* Preferred icon size */
+    display: inline-block;
+    line-height: 1;
+    text-transform: none;
+    letter-spacing: normal;
+    word-wrap: normal;
+    white-space: nowrap;
+    direction: ltr;
+  
+    /* Support for all WebKit browsers. */
+    -webkit-font-smoothing: antialiased;
+    /* Support for Safari and Chrome. */
+    text-rendering: optimizeLegibility;
+  
+    /* Support for Firefox. */
+    -moz-osx-font-smoothing: grayscale;
+  
+    /* Support for IE. */
+    font-feature-settings: 'liga';
+  }

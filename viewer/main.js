@@ -1,10 +1,19 @@
 var g_sceneData = null;
 var g_defaultElement = null;
+var g_weatherData = null;
+var g_timeIntervals = null; //= new Cesium.TimeIntervalCollection();
 // testing
 var housedata = null;
+var weatherCtr = null;
 
 // object references
 var viewer = null;
+
+var weather_icon_names = {
+    "Clouds" : "cloud",
+    "Thunderstorm" : "flash_on",
+    "Rain" : "opacity"
+};
 
 function loadSceneData()
 {
@@ -62,7 +71,7 @@ function loadElement(description)
     if(element.datatype == "points")
     {
         element.style = new Cesium.Cesium3DTileStyle({
-            pointSize : 8.0
+            pointSize : 24.0
         });
     }
 
@@ -246,24 +255,86 @@ function processShapeData(description)
     }
 }
 
+async function loadWeatherData()
+{
+    /*
+    var req = new XMLHttpRequest();
+    req.addEventListener("load", function(evt){
+        processWeatherData(req.responseText);
+    });
+    req.open("GET", "weather_data.json");
+    req.send();
+    */
+
+    // await fetch("weather_data.json").then(function(response) {
+    //     response.text().then(function(text) {
+    //         processWeatherData(text);
+    //     });
+    // });
+
+    var response = await fetch("weather_data.json");
+    var text = await response.text();
+    await processWeatherData(text);
+}
+
+async function processWeatherData(description)
+{
+    return new Promise((resolve, reject) => {
+        console.log("processWeatherData()");
+        console.log(description);
+
+        var g_weatherData = JSON.parse(description);
+        var intervals = new Array();
+
+        for(var snapshot of g_weatherData.weather)
+        {
+            console.log("Snapshot time " + snapshot.dt);
+
+            var interval = new Cesium.TimeInterval(
+                {
+                    "start" : Cesium.JulianDate.fromDate(new Date(snapshot.dt * 1000)),
+                    "stop" : Cesium.JulianDate.fromDate(new Date((snapshot.dt * 1000) + 3600000)),
+                    "isStartIncluded" : true,
+                    "isStopIncluded" : false,
+                    // "data" : snapshot.weather
+                    "data" : snapshot
+                }
+            );
+
+            console.log("Adding interval");
+            intervals.push(interval);
+        }
+
+        g_timeIntervals = new Cesium.TimeIntervalCollection(intervals);
+
+        resolve();
+    });
+}
+
 function ah_sandpit(viewer)
 {
     viewer.dataSources.add(new Cesium.CzmlDataSource().load('../assets/simple.czml'))
     
 }
 
-function startup()
+async function startup()
 {
     // create a Cesium viewer and load Earth data
     
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0ZDgyMmRiYS0zMjMyLTQxMzMtYTNiMC05ZmZiZTRkZWQ2YTQiLCJpZCI6ODMyMywic2NvcGVzIjpbImFzciIsImdjIl0sImlhdCI6MTU1MTc1MzAzNX0.wDKGdaNCaseIbASuOFeSRdXF-Ch4uGfMQdeVBKTCzNU';
 
-    viewer = new Cesium.Viewer('cesiumContainer');
+    viewer = new Cesium.Viewer('cesiumContainer', 
+        {
+            // 'vrButton' : true    // cardboard (not webVR) mode switch button
+        }
+    );
 
     // load imagery
     var imageryLayer = viewer.imageryLayers.addImageryProvider(
         new Cesium.IonImageryProvider({ assetId: 3813 })
     );
+
+    weatherCtr = document.getElementById("weatherReadout");
     
     //viewer = new Cesium.Viewer('cesiumContainer', {
     //    imageryProvider: Cesium.createTileMapServiceImageryProvider({
@@ -279,6 +350,10 @@ function startup()
     // load all scene data
     loadSceneData();
 
+    // load demo weather data
+    await loadWeatherData();
+
+    viewer.clockViewModel.clock.currentTime = g_timeIntervals.get(0).start;
 
     // look at the default element, this should be selected as part of the loading process
     viewer.zoomTo(g_defaultElement);
@@ -296,7 +371,6 @@ function startup()
 
     var placeholderEntity = new Cesium.Entity();
     
-
     viewer.screenSpaceEventHandler.setInputAction(function onLeftClick(movement){
         var feature = viewer.scene.pick(movement.position);
         if(!Cesium.defined(feature) || feature.id == undefined)
@@ -309,4 +383,43 @@ function startup()
         placeholderEntity.description = 'Number of occupants: TBA<br/>';
 
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    viewer.clockViewModel.clock.onTick.addEventListener(function(clock)
+    {
+        updateFromTime(clock);
+    });
+}
+
+function updateFromTime(clock)
+{
+    let cTime = clock.currentTime;
+    let interval = g_timeIntervals.findDataForIntervalContainingDate(cTime);
+
+    if(interval != undefined)
+    {
+        // console.log("Found data at interval: " + interval.dt);
+        // TODO: maybe don't keep destroying the contents of the title div :)
+        document.getElementById("weather_readout_title").innerHTML = interval.weather[0].main;
+        var iconname = weather_icon_names[interval.weather[0].main];
+        if(iconname != undefined)
+        {
+            var e = document.createElement("I");
+            e.textContent = iconname;
+            e.className = 'material-icons';
+            document.getElementById("weather_readout_title").appendChild(e);
+        }
+
+        document.getElementById("weather_readout_description").innerHTML = interval.weather[0].description;
+        document.getElementById("weather_readout_content").innerHTML = "Temperature: " + (interval.main.temp - 273.15) + "&deg;C<br/>";
+        document.getElementById("weather_readout_content").innerHTML += "Pressure: " + interval.main.pressure + " hPa<br/>";
+        document.getElementById("weather_readout_content").innerHTML += "Humidity: " + interval.main.humidity + "&percnt;<br/>";
+        document.getElementById("weather_readout_content").innerHTML += "Wind speed: " + interval.wind.speed + "m/sec<br/>";
+        document.getElementById("weather_readout_content").innerHTML += "Wind direction: " + interval.wind.deg + "&deg;<br/>";
+    }
+    else
+    {
+        document.getElementById("weather_readout_title").innerHTML = "Data not present for this interval";
+        document.getElementById("weather_readout_description").innerHTML = "";
+        document.getElementById("weather_readout_content").innerHTML = "";
+    }
 }
