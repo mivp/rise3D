@@ -68,10 +68,10 @@ function loadElement(description)
         g_defaultElement = element;
     }
 
-    if(element.datatype == "points")
+    if(description.datatype == "points")
     {
         element.style = new Cesium.Cesium3DTileStyle({
-            pointSize : 24.0
+            "pointSize" : "5.0"
         });
     }
 
@@ -109,6 +109,10 @@ function loadFile(element)
     {
         loadKML(element);
     }
+    else if(element.datatype == "mesh")
+    {
+        loadMesh(element);
+    }
 }
 
 function loadKML(description)
@@ -119,6 +123,30 @@ function loadKML(description)
             camera: viewer.scene.camera,
             canvas: viewer.scene.canvas
         });
+}
+
+function loadMesh(description)
+{
+    console.log("Loading mesh file: " + new URL(description.path, window.location.href));
+
+    var deg = toLatLon(description.position.x, description.position.y, 50, 'M');
+
+    var origin = Cesium.Cartesian3.fromDegrees(deg.longitude, deg.latitude);
+    var modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin);
+    // Cesium.Matrix4.multiplyByTranslation(modelMatrix, new Cesium.Cartesian3(0, 1, 0), modelMatrix);
+    Cesium.Matrix4.multiply(modelMatrix, Cesium.Matrix4.fromTranslationQuaternionRotationScale(
+        new Cesium.Cartesian3(-8, 41, 18),
+        new Cesium.Quaternion.fromHeadingPitchRoll(new Cesium.HeadingPitchRoll(0, (Math.PI / 2), 0)),
+        new Cesium.Cartesian3(1, 1, 1)),
+        modelMatrix);
+
+    viewer.scene.primitives.add(Cesium.Model.fromGltf({
+        url: description.path,
+        scale: 0.05,
+        show: true,
+        modelMatrix: modelMatrix,
+        allowPicking: true
+    }));
 }
 
 function loadShapeData(element)
