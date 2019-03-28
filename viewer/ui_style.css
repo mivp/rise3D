@@ -36,6 +36,85 @@
     font-size: 11px;
 }
 
+#groupsPanel
+{
+    z-index: 10;
+    right: 100px;
+    top: 100px;
+    width: 350px;
+    height: 500px;
+    position: fixed;
+    background: #383038;
+    
+    color: #d0d0d0;
+    font-family: 'Questrial', sans-serif;       
+}
+
+.groupsTable_cbCell
+{
+    width: 50px;
+    height: 25px;
+    color: #d0d0d0;
+    text-align: center;
+}
+
+.groupsTable_nameCell
+{
+    width: 300px;
+    height: 25px;
+    color: #d0d0d0;
+    font-family: 'Questrial', sans-serif;    
+}
+
+.groupsTable_nameCell_title
+{
+    width: 300px;
+    height: 25px;
+    color: #d0d0d0;
+    font-family: 'Questrial', sans-serif;    
+}
+
+.groupsTable_nameCell:hover
+{
+    font-weight: bold;
+}
+
+.groupsTable_toggleBtn
+{
+    width: 48px;
+    height: 23px;
+    background: #484048;
+    color: #d0d0d0;
+    border-width: 0px;
+}
+
+#sitesSelector
+{
+    -webkit-appearance: none;
+    width: 275px;
+    height: 25px;
+    background: #383038;
+    
+    color: #d0d0d0;
+    font-family: 'Questrial', sans-serif;  
+}
+
+.groupsTable_siteSelector_main
+{
+    width: 275px;
+    height: 25px;
+    color: #d0d0d0;
+    font-family: 'Questrial', sans-serif;    
+}
+
+.groupsTable_siteSelector_icon
+{
+    width: 25px;
+    height: 25px;
+    color: #d0d0d0;
+    font-family: 'Questrial', sans-serif;    
+}
+
 /* from Google for Material Icons font:
 
 https://google.github.io/material-design-icons/
@@ -45,12 +124,12 @@ https://google.github.io/material-design-icons/
     font-family: 'Material Icons';
     font-style: normal;
     font-weight: 400;
-    src: url(/Assets/fonts/MaterialIcons-Regular.eot); /* For IE6-8 */
+    src: url(/assets/fonts/MaterialIcons-Regular.eot); /* For IE6-8 */
     src: local('Material Icons'),
       local('MaterialIcons-Regular'),
-      url(/Assets/fonts/MaterialIcons-Regular.woff2) format('woff2'),
-      url(/Assets/fonts/MaterialIcons-Regular.woff) format('woff'),
-      url(/Assets/fonts/MaterialIcons-Regular.ttf) format('truetype');
+      url(/assets/fonts/MaterialIcons-Regular.woff2) format('woff2'),
+      url(/assets/fonts/MaterialIcons-Regular.woff) format('woff'),
+      url(/assets/fonts/MaterialIcons-Regular.ttf) format('truetype');
   }
 
 .material-icons {

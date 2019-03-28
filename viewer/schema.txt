@@ -9,7 +9,8 @@ EXAMPLE:
     "elements" : [                                                              // root element, array of scene elements
         {
             "type" : "tileset",                                                 // "tileset": Cesium 3D Tiles format, "geometry": manually defined geometry, "file": external file, e.g. a mesh
-            "datatype" : "points",                                              // "points", "mesh", "shapes", "kml", others to follow..
+            "datatype" : "points",                                              // "points", "mesh", "shapes", "kml", "orthophoto", others to follow..
+            "enabled" : true,                                                   // if this is false, the asset will not be loaded
             "path" : "/Assets/points/sample/tileset.json",                      // path within web server hierarchy pointing to file to load
             "name" : "sample_points",                                           // internal identifier (unique) for finding this object and connecting data to it
             "caption" : "Sample region",                                        // optional - title or caption to show anywhere the name is displayed
@@ -20,7 +21,35 @@ EXAMPLE:
             "datatype" : "shapes",
             "path" : "/Assets/shapes/building_shapes.json",
             "name" : "buildings_data"
-        }
+        },
+        {
+            "type": "file",
+            "datatype" : "mesh",
+            "path" : "/Assets/meshes/test_mesh.glb",                            // must be in gltf/glb format
+            "name" : "testmesh",
+            "position" : {
+                "x" : 800000.0,                                                 // currently in UTM50S, but will be flexible later
+                "y" : 9500000.0
+            },
+            "transform" : {                                                     // position/scale/rotation *after* current geo system applied
+                "translation" : {
+                    "x" : 0,
+                    "y" : 0,
+                    "z" : 0
+                },
+                "orientation" : {
+                    "x" : 0,                                                    // pitch in degrees
+                    "y" : 0,                                                    // yaw in degrees
+                    "z" : 0                                                     // roll in degrees
+                },
+                "scale" : {
+                    "x" : 0,                                                    // non-uniform scale of mesh, 1.0 is unscaled
+                    "y" : 0,
+                    "z" : 0
+                }
+            }
+        },
+
     ]
 }
 
@@ -29,6 +58,7 @@ external file support:
     - "type" must be set to "file", then "datatype" can be:
         - kml
         - mesh (gltf format)
+        - orthophoto (directory structure)
         - more to come..
 
 KMZ files may need to be extracted (ZIP format) and loaded as KML due to cross-origin issues with the ZIP inflater
