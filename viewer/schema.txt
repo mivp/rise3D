@@ -15,6 +15,10 @@ EXAMPLE:
             "name" : "sample_points",                                           // internal identifier (unique) for finding this object and connecting data to it
             "caption" : "Sample region",                                        // optional - title or caption to show anywhere the name is displayed
             "caption_offset" : [0, 0, 0]                                        // optional - offset vector in metres for hover captions in the 3D world
+            "layers" : [
+                "layername",                                                    // optional - assign this element to a view layer, for quick access/toggle/manipulation etc.
+                "layer2name",                                                   //            if no layer is specified, then a unique layer with the name of the element will be created
+            ]
         },
         {
             "type": "geometry",

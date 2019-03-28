@@ -10,6 +10,7 @@ var weatherCtr = null;
 var selectedPoint = null;
 var g_ctime = null;
 var g_displayGroups = new Map();
+var g_displayLayers = new Map();    // new approach at grouping data - works like display groups, except that a layer can contain many groups/objects that may not be of similar types
 
 // also testing, some storage containers that will be improved later..
 var g_kmlSources = new Map();
@@ -170,7 +171,9 @@ function loadKML(description)
 
         var selector = document.getElementById("sitesSelector");
         var grp = document.createElement("optgroup");
-        grp.label = description.path;
+        // grp.label = description.path;
+
+        grp.label = description.path.substring(description.path.lastIndexOf('/') + 1, description.path.lastIndexOf('.'));
 
         selector.add(grp);
 
@@ -724,6 +727,10 @@ async function startup()
         // viewer.zoomTo(e.target.value);
     }
 
+    // set default site index
+    // TODO: remove hard-coded value
+    selector.selectedIndex = 10;
+
     ah_sandpit(viewer);
     
     // var testRegion = viewer.entities.add({
@@ -778,6 +785,18 @@ async function startup()
 function addDisplayGroup(name, group)
 {
     g_displayGroups.set(name, group);
+
+    var layer = g_displayLayers.get(name);
+
+    // if the layer doesn't exist, then create it
+    if(layer == undefined)
+    {
+        layer = [];
+    }
+
+    layer.push(group);
+
+    g_displayLayers.set(name, layer);
 
     var tbl = document.getElementById('groupsTable');
     var row = tbl.insertRow();
