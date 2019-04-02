@@ -17,8 +17,12 @@ var g_kmlSources = new Map();
 
 var g_intervalGroups = new Map();   // used for storing intervals as data is loaded in, this will all be merged into g_timeIntervals
 
+var g_objToSrcMap = new Map();  // Cesium object IDs and references to data sources
+
 // object references
 var viewer = null;
+var previewEntity = null;
+var previewDataObj = null;
 
 var weather_icon_names = {
     "Clouds" : "cloud",
@@ -115,9 +119,10 @@ function loadElement(description)
                 },
                 label : {
                     text : caption,
-                    font : '16pt Segoe UI',
+                    font : '24pt Segoe UI',
                     style : Cesium.LabelStyle.FILL_AND_OUTLINE,
-                    outlineWidth : 0.5,
+                    outlineWidth : 1.0,
+                    outlineColor: Cesium.Color.BLACK,
                     verticalOrigin : Cesium.VerticalOrigin.BOTTOM,
                     pixelOffset : new Cesium.Cartesian2(0, -9)
                 }
@@ -193,6 +198,15 @@ function loadKML(description)
             opt.className = "selector_line";
             opt.value = e.id;
             grp.appendChild(opt);
+
+            var dataObj = new DataEntity("kml_marker_" + e.id);
+            dataObj.type = EntityType.Marker;
+            dataObj.data = {
+                name : e.name,
+                source : e
+            };
+
+            g_objToSrcMap.set(e.id, dataObj);
         }
         resolve();
     });
@@ -226,10 +240,21 @@ function loadMesh(description)
         });
 
         // grp.add(model);
-        viewer.scene.primitives.add(model);
+        var primitive = viewer.scene.primitives.add(model);
 
         // addDisplayGroup(description.name + "(" + description.datatype + ")", grp);
         addDisplayGroup(description.name + "(" + description.datatype + ")", model);
+
+        var dataObj = new DataEntity("model_" + description.name);
+        dataObj.type = EntityType.Object;
+        dataObj.data = {
+            name : description.name,
+            source : model
+        };
+
+        model.id = dataObj; // TODO: this isn't 100% consistent, need to make all objects reference data entities or have an ID that can be looked up, preferably not a mix of both :)
+
+        g_objToSrcMap.set("model_" + description.name, dataObj);
 
         resolve();
     });
@@ -286,6 +311,7 @@ async function processHygrodataSummary(description, filenames, datapath, sourceE
 
         // create the marker to represent the data collection location
         var markerPosition = Cesium.Cartesian3.fromDegrees(data[i][2], data[i][1]);
+        var markerName = data[i][5] + " " + data[i][0];
     
         var marker = viewer.entities.add({
             name : "marker_" + pointID,
@@ -300,14 +326,27 @@ async function processHygrodataSummary(description, filenames, datapath, sourceE
                 text : data[i][5] + " " + data[i][0],
                 font : '16pt Segoe UI',
                 style : Cesium.LabelStyle.FILL_AND_OUTLINE,
-                outlineWidth : 0.5,
+                outlineWidth : 1.5,
+                outlineColor: Cesium.Color.BLACK,
                 verticalOrigin : Cesium.VerticalOrigin.BOTTOM,
-                pixelOffset : new Cesium.Cartesian2(0, -9)
+                pixelOffset : new Cesium.Cartesian2(0, -9),
+                distanceDisplayCondition : new Cesium.DistanceDisplayCondition(0.0, 8000.0),
+                translucencyByDistance : new Cesium.NearFarScalar(1000.0, 1.0, 8000.0, 0.0)
             },
             id : pointID
         });
 
         grp.add(marker);
+
+        var dataObj = new DataEntity("hygro_" + pointID);
+        dataObj.type = EntityType.Hygrochron;
+        dataObj.data = {
+            name : pointID,
+            source : null
+        };
+
+        // g_objToSrcMap.set("hygro_" + pointID, dataObj);
+        g_objToSrcMap.set(pointID, dataObj);
 
         // load the time series for this data location
         var foundDataFile = false;
@@ -336,7 +375,7 @@ async function processHygrodataSummary(description, filenames, datapath, sourceE
             // now load the summary CSV
             var response = await fetch(datapath + "/" + targetFile);
             var text = await response.text();
-            await processHygrodataSeries(text, pointID, marker, sourceElement);
+            await processHygrodataSeries(text, pointID, marker, sourceElement, markerName, dataObj);
         }
     }
 
@@ -344,7 +383,7 @@ async function processHygrodataSummary(description, filenames, datapath, sourceE
 }
 
 // FIXME: currently storing a reference to each updatable marker here, really should have a dedicated structure and search feature for this
-async function processHygrodataSeries(rawdata, pointID, marker, sourceElement)
+async function processHygrodataSeries(rawdata, pointID, marker, sourceElement, markerName, dataObj)
 {
     return new Promise((resolve, reject) => {
         console.log("processHygrodataSeries()");
@@ -385,12 +424,13 @@ async function processHygrodataSeries(rawdata, pointID, marker, sourceElement)
                     "stop" : Cesium.JulianDate.fromDate(endInterval),
                     "isStartIncluded" : true,
                     "isStopIncluded" : false,
+                    // "isStopIncluded" : true,//false,
                     // "data" : { "temperature" : data[i][7], "humidity" : data[i][8] }
                     "data" : //[
                         { 
                             "element" : marker,
                             "type" : "hygro",
-                            "owner" : data[i][5] + " " + data[i][0],
+                            "owner" : markerName,
                             "value" : {
                                 "temperature" : data[i][7], "humidity" : data[i][8]
                             }
@@ -403,7 +443,11 @@ async function processHygrodataSeries(rawdata, pointID, marker, sourceElement)
             intervals.push(interval);
         }
 
-        g_intervalGroups.set(sourceElement.name, new Cesium.TimeIntervalCollection(intervals));
+        // g_intervalGroups.set(sourceElement.name, new Cesium.TimeIntervalCollection(intervals));
+        var intervalCollection = new Cesium.TimeIntervalCollection(intervals);
+        g_intervalGroups.set(markerName, intervalCollection);
+
+        dataObj.data.source = intervalCollection;
 
         // g_timeIntervals = new Cesium.TimeIntervalCollection(intervals);
         g_hygroData.set(pointID, { "intervals" : new Cesium.TimeIntervalCollection(intervals), "marker" : marker, "caption" : marker.label.text });
@@ -496,6 +540,15 @@ function processShapeData(description, sourceElement)
 
         grp.add(shapeVol);
 
+        var dataObj = new DataEntity("shape_" + shape.id);
+        dataObj.type = EntityType.Building;
+        dataObj.data = {
+            name : shape.id,
+            shape : shape.lines
+        };
+
+        g_objToSrcMap.set(shapeVol._id, dataObj);
+
         // var shapeGeomSrc = new Cesium.PolylineVolumeGeometry({
         //     // vertexFormat : Cesium.VertexFormat.POSITION_ONLY,
         //     vertexFormat : Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
@@ -551,7 +604,8 @@ function processShapeData(description, sourceElement)
         var highlight = viewer.scene.primitives.add(new Cesium.ClassificationPrimitive({
             geometryInstances: new Cesium.GeometryInstance({
                 geometry: shapeGeom,
-                id: shape.id,
+                // id: shape.id,
+                // id: dataObj.id,
                 // geometry : new Cesium.EllipsoidGeometry({
                 //     radii : new Cesium.Cartesian3(20.0, 20.0, 20.0)
                 // }),
@@ -563,11 +617,14 @@ function processShapeData(description, sourceElement)
                     color: Cesium.ColorGeometryInstanceAttribute.fromColor(testColour),
                     show: new Cesium.ShowGeometryInstanceAttribute(true)
                 },
-                id: 'volume' + i.toString()
+                // id: 'volume' + i.toString()
+                id: 'volume_' + dataObj.id
             }),
             show: true,
             classificationType : Cesium.ClassificationType.CESIUM_3D_TILE
         }));
+
+        g_objToSrcMap.set(highlight.geometryInstances.id, dataObj);
     }
 
     addDisplayGroup(sourceElement.name + "(" + sourceElement.datatype + ")", grp);
@@ -655,6 +712,8 @@ async function startup()
         }
     );
 
+    viewer.clock.shouldAnimate = true;
+
     // load imagery
     var imageryLayer = viewer.imageryLayers.addImageryProvider(
         new Cesium.IonImageryProvider({ assetId: 3813 })
@@ -681,12 +740,21 @@ async function startup()
     
     // merge all timesteps together
     g_timeIntervals = new Cesium.TimeIntervalCollection();
+    console.log('Combining time interval collections, count: ' + g_intervalGroups.size);
 
     for(var collection of g_intervalGroups.values())
     {
+        console.log('Adding time interval collection, length: ' + collection.length);
+
         for(let i = 0; i < collection.length; i++)
         {
-            g_timeIntervals.addInterval(collection.get(i));
+            g_timeIntervals.addInterval(collection.get(i),
+                (l, r) => {
+                    (l.type == r.type) &&
+                    (l.owner == r.owner) &&
+                    (l.value == r.value)
+                }
+            );
         }
 
         // g_timeIntervals = g_timeIntervals.intersect(
@@ -753,26 +821,81 @@ async function startup()
             return;
         }
 
-        if(feature.id._id != undefined)
-        {
-            var collection = g_hygroData.get(feature.id._id).intervals;
+        var dataObj = null;
+        console.log(feature);
 
-            if(collection != undefined)
-            {
-                console.log("Found data location " + feature.id._id + ", checking time " + g_ctime);
-            }
+        // first check if the id is a reference to a DataEntity
+        if(feature.id._data_entity_type)
+        {
+            dataObj = feature.id;
+        }
+        // otherwise check if the _id property exists, if it does, check for a matching data entity
+        else if(feature.id._id != undefined)
+        {
+            // dataObj = DataEntity.getById(feature.id._id);
+            dataObj = g_objToSrcMap.get(feature.id._id);
+        }
+
+        // if that didn't work, check the id property (for some objects, this is a reference to a Cesium entity though!)
+        if(dataObj == null || dataObj == undefined)
+        {
+            dataObj = g_objToSrcMap.get(feature.id);
+        }
+
+            // var collection = g_hygroData.get(feature.id._id).intervals;
+
+            // if(collection != undefined)
+            // {
+            //     console.log("Found data location " + feature.id._id + ", checking time " + g_ctime);
+            // }
+
+            // var interval = collection.findDataForIntervalContainingDate(g_ctime);
+
+            // if(interval != undefined)
+            // {
+            //     console.log("Current time temp: " + interval.temperature + " | humidity: " + interval.humidity);
+            // }            
+        // }
+
+        if(dataObj != null && dataObj != undefined)
+        {
+            // viewer.selectedEntity = feature;
+
+            placeholderEntity.name = "Data entity ID: " + dataObj.data.name;
+            // viewer.selectedEntity.description = "Data entity ID: " + dataObj.name + ', type: ' + dataObj.type;
+            placeholderEntity.description = "Data entity ID: " + dataObj.data.name + ', type: ' + dataObj.type;
+
+            viewer.selectedEntity = placeholderEntity;
+
+            // previewEntity = new Cesium.Entity();
+            // previewEntity.name = "Data entity ID: " + dataObj.data.name;
+            // previewEntity.description = "Data entity ID: " + dataObj.data.name + ', type: ' + dataObj.type;
+            // previewEntity.position = feature.position;
+            // previewEntity.show = true;
+            previewEntity = placeholderEntity;
+            previewEntity.description = new Cesium.CallbackProperty(updatePreviewEntity, false);
+            previewDataObj = dataObj;
+        }
+        else
+        {
+            placeholderEntity.name = "Building: " + feature.id._id;
+            placeholderEntity.description = 'Number of occupants: TBA<br/>';
+
+            viewer.selectedEntity = placeholderEntity;
+            previewEntity = null;
+            previewDataObj = null;
+
+            var collection = previewDataObj.data.source;
 
             var interval = collection.findDataForIntervalContainingDate(g_ctime);
-
+    
             if(interval != undefined)
             {
                 console.log("Current time temp: " + interval.temperature + " | humidity: " + interval.humidity);
             }            
         }
 
-        placeholderEntity.name = "Building: " + feature.id._id;
-        viewer.selectedEntity = placeholderEntity;
-        placeholderEntity.description = 'Number of occupants: TBA<br/>';
+        // viewer.selectedEntity = placeholderEntity;
 
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
@@ -780,6 +903,39 @@ async function startup()
     {
         updateFromTime(clock);
     });
+}
+
+function updatePreviewEntity(time, result)
+{
+    // console.log("updatePreviewEntity()");
+    var description = "";
+    if(previewDataObj == null)
+    {
+        // console.log("updatePreviewEntity(): no data object");
+        description += "No data recorded for this interval";
+        return description;
+    }
+
+    description = "Data type: " + previewDataObj.type + "<br/><br/>";
+
+    if(previewDataObj.type == EntityType.Hygrochron)
+    {
+        var collection = previewDataObj.data.source;
+
+        var interval = collection.findDataForIntervalContainingDate(time);
+
+        if(interval != undefined)
+        {
+            // previewEntity.description += ("Current time temp: " + interval.temperature + " | humidity: " + interval.humidity);
+            description += ("Current time temp: " + Math.abs(interval.value.temperature).toFixed(2) + "C | humidity: " + Math.abs(interval.value.humidity).toFixed(2) + "%");
+        }
+    }
+    else
+    {
+        // console.log("updatePreviewEntity(): not a hygrochron snapshot");
+    }
+
+    return description;
 }
 
 function addDisplayGroup(name, group)
@@ -826,22 +982,28 @@ function updateFromTime(clock)
 {
     let cTime = clock.currentTime;
     g_ctime = Cesium.JulianDate.clone(cTime);
-    let interval = g_timeIntervals.findDataForIntervalContainingDate(cTime);
-    var snapshot = null;
 
-    if(interval != undefined)
+    for(let collection of g_intervalGroups.values())
     {
-        if(interval.type == "weather")
+        // let interval = g_timeIntervals.findDataForIntervalContainingDate(cTime);
+        let interval = collection.findDataForIntervalContainingDate(cTime);
+        var snapshot = null;
+
+        if(interval != undefined)
         {
-            // snapshot = intervalValue;
-            snapshot = interval.value;
-        }
-        else if(interval.type == "hygro")
-        {
-            // if(selectedPoint != null)
+            if(interval.type == "weather")
             {
-                console.log("Found hygrochron data for interval");
-                interval.element.label.text = interval.owner + " (" + interval.value.temperature + "&deg;, humid: " + interval.value.humidity + ")";
+                // snapshot = intervalValue;
+                snapshot = interval.value;
+            }
+            else if(interval.type == "hygro")
+            {
+                // if(selectedPoint != null)
+                {
+                    // console.log("Found hygrochron data for interval");
+                    // console.log("owner: " + interval.owner + " temp: " + interval.value.temperature + " humid: " + interval.value.humidity);
+                    interval.element.label.text = interval.owner + "\n(" + Math.abs(interval.value.temperature).toFixed(2) + "C, humid: " + Math.abs(interval.value.humidity).toFixed(2) + "%)";
+                }
             }
         }
     }
