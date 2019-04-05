@@ -115,6 +115,44 @@
     font-family: 'Questrial', sans-serif;    
 }
 
+#loaderProgressDisplay
+{
+    z-index: 11;
+    bottom: 240px;
+    width: 400px;
+    height: 120px;
+    left: 0;
+    right: 0;
+    position: absolute;
+    margin: auto auto;
+    background: #383038;
+}    
+
+.progressHeader
+{
+    color: #d0d0d0;
+    font-family: 'Questrial', sans-serif;
+    font-size: 32pt;
+    font-weight: 800;
+    text-align: center;
+    /* display: inline-block; */
+    position: absolute;
+    vertical-align: middle;
+    width: 100%;
+    height: 100%;
+}
+
+#loaderProgressBar
+{
+    z-index: 12;
+    width: 0%;
+    height: 10px;
+    bottom: 30px;
+    left: 0px;
+    position: absolute;
+    background: #d0d0d0;
+}
+
 /* from Google for Material Icons font:
 
 https://google.github.io/material-design-icons/

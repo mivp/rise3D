@@ -12,6 +12,10 @@ var g_ctime = null;
 var g_displayGroups = new Map();
 var g_displayLayers = new Map();    // new approach at grouping data - works like display groups, except that a layer can contain many groups/objects that may not be of similar types
 
+// loader
+var _g_loaderTotalSteps = 0;
+var _g_loaderCurrentStep = 0;
+
 // also testing, some storage containers that will be improved later..
 var g_kmlSources = new Map();
 
@@ -44,9 +48,14 @@ function processSceneData(data)
         console.log("processSceneData()");
         console.log(data);
         var g_sceneData = JSON.parse(data);
+        var i = 0;
+        
+        updateProgressDisplay(0, i, g_sceneData.elements.length)
 
         for(var element of g_sceneData.elements)
         {
+            updateProgressDisplay(0, i);
+
             if(element.enabled == false)
             {
                 console.log("Scene element with type " + element.type + " not enabled in scene data JSON, skipping..");
@@ -72,6 +81,8 @@ function processSceneData(data)
                 // unknown element type
                 console.log("Scene element with unknown type " + element.type + " encounted, skipping..");
             }
+            
+            i++;
         }
 
         resolve();
@@ -182,10 +193,14 @@ function loadKML(description)
 
         selector.add(grp);
 
+        var eIndex = 0;
+
         for(var e of dataSource.entities.values)
         {
             console.log("KML entity:");
             console.log(e.name);
+
+            updateProgressDisplay(eIndex / dataSource.entities.values.length);
 
             if(e.position == undefined)
             {
@@ -207,6 +222,8 @@ function loadKML(description)
             };
 
             g_objToSrcMap.set(e.id, dataObj);
+
+            eIndex++;
         }
         resolve();
     });
@@ -309,6 +326,8 @@ async function processHygrodataSummary(description, filenames, datapath, sourceE
     {
         var pointID = data[i][0].slice(-3);
 
+        updateProgressDisplay(i / data.length);
+
         // create the marker to represent the data collection location
         var markerPosition = Cesium.Cartesian3.fromDegrees(data[i][2], data[i][1]);
         var markerName = data[i][5] + " " + data[i][0];
@@ -341,7 +360,7 @@ async function processHygrodataSummary(description, filenames, datapath, sourceE
         var dataObj = new DataEntity("hygro_" + pointID);
         dataObj.type = EntityType.Hygrochron;
         dataObj.data = {
-            name : pointID,
+            name : marker.name,
             source : null
         };
 
@@ -737,6 +756,8 @@ async function startup()
 
     // load demo weather data
     await loadWeatherData();
+
+    document.getElementById('loaderProgressDisplay').style.display = 'none';
     
     // merge all timesteps together
     g_timeIntervals = new Cesium.TimeIntervalCollection();
@@ -799,7 +820,7 @@ async function startup()
     // TODO: remove hard-coded value
     selector.selectedIndex = 10;
 
-    ah_sandpit(viewer);
+    // ah_sandpit(viewer);
     
     // var testRegion = viewer.entities.add({
     //     position: Cesium.Cartesian3.fromDegrees(119.4955547, -5.0835328),
@@ -976,6 +997,37 @@ function addDisplayGroup(name, group)
     nameCell.onclick = function() {
         viewer.zoomTo(group);
     }
+}
+
+/**
+ * 
+ * @param {number} currentDivision % of current step complete
+ * @param {number} currentStep number of current loader step (e.g. scene_data.json element)
+ * @param {number} totalSteps total number of loader steps
+ */
+function updateProgressDisplay(currentDivision, currentStep, totalSteps)
+{
+    var progress = 0;
+
+    if(currentStep != undefined)
+    {
+        _g_loaderCurrentStep = currentStep;
+    }
+    
+    if(totalSteps != undefined)
+    {
+        _g_loaderTotalSteps = totalSteps;
+    }
+
+    if(_g_loaderTotalSteps > 0)
+    {
+        progress = 100.0 * ((_g_loaderCurrentStep + currentDivision) / _g_loaderTotalSteps);
+    }
+
+    var msg = "Loading data..<br/><br/>";
+
+    // document.getElementById('loaderProgressDisplay').textContent = msg;
+    document.getElementById('loaderProgressBar').style.width = Math.abs(progress).toString() + '%';
 }
 
 function updateFromTime(clock)
