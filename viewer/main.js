@@ -294,7 +294,7 @@ async function processHygrodataSummary(description, filenames, datapath, sourceE
     console.log("processHygrodataSummary()");
     console.log(description);
 
-    var dataFilenames = filenames.toUpperCase().split('\n');
+    var dataFilenames = filenames.split('\n');
 
     console.log(dataFilenames);
 
@@ -375,7 +375,7 @@ async function processHygrodataSummary(description, filenames, datapath, sourceE
 
         for(let filename of dataFilenames)
         {
-            var candidateString = filename.slice(-12, -7).split(' ').join('');
+            var candidateString = filename.slice(-12, -7).split(' ').join('').toUpperCase();
 
             // console.log("Candidate string: " + candidateString);
 
