@@ -36,7 +36,19 @@ var weather_icon_names = {
 
 async function loadSceneData()
 {
-    var response = await fetch("scene_data.json");
+    var scene_file = "scene_data.json";
+    /*
+    var urlvars = getUrlVars();
+    console.log("loadScenedata");
+    console.log(urlvars);
+    if ("scene_file" in urlvars) 
+    {
+        scene_file=urlvars["scene_file"];
+    }
+    console.log(scene_file);
+    */
+    
+    var response = await fetch(scene_file);
     var text = await response.text();
 
     await processSceneData(text);
@@ -713,10 +725,19 @@ async function processWeatherData(description)
     });
 }
 
+function getUrlVars() {
+    var vars = {};
+    var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+        vars[key] = value;
+    });
+    return vars;
+}
+
 function ah_sandpit(viewer)
 {
-    viewer.dataSources.add(new Cesium.CzmlDataSource().load('../assets/simple.czml'))
-    
+    //viewer.dataSources.add(new Cesium.CzmlDataSource().load('../assets/simple.czml'))
+    //var scene_file=getUrlVars()["scene_file"];
+    //console.log(urlvars)
 }
 
 async function startup()
@@ -820,7 +841,7 @@ async function startup()
     // TODO: remove hard-coded value
     selector.selectedIndex = 10;
 
-    // ah_sandpit(viewer);
+     ah_sandpit(viewer);
     
     // var testRegion = viewer.entities.add({
     //     position: Cesium.Cartesian3.fromDegrees(119.4955547, -5.0835328),
@@ -997,6 +1018,7 @@ function addDisplayGroup(name, group)
     nameCell.onclick = function() {
         viewer.zoomTo(group);
     }
+    dragElement(document.getElementById("groupsPanel"));
 }
 
 /**
@@ -1089,4 +1111,53 @@ function updateFromTime(clock)
         document.getElementById("weather_readout_description").innerHTML = "";
         document.getElementById("weather_readout_content").innerHTML = "";
     }
+    dragElement(document.getElementById("weatherReadout"));
+
+}
+
+
+//NH: Draggable divs
+
+
+
+function dragElement(elmnt) {
+ //   console.log(elmnt);
+  var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+  if (document.getElementById(elmnt.id)) {
+    /* if present, the header is where you move the DIV from:*/
+    document.getElementById(elmnt.id).onmousedown = dragMouseDown;
+  } else {
+    /* otherwise, move the DIV from anywhere inside the DIV:*/
+    elmnt.onmousedown = dragMouseDown;
+  }
+
+  function dragMouseDown(e) {
+    e = e || window.event;
+    e.preventDefault();
+    // get the mouse cursor position at startup:
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+    document.onmouseup = closeDragElement;
+    // call a function whenever the cursor moves:
+    document.onmousemove = elementDrag;
+  }
+
+  function elementDrag(e) {
+    e = e || window.event;
+    e.preventDefault();
+    // calculate the new cursor position:
+    pos1 = pos3 - e.clientX;
+    pos2 = pos4 - e.clientY;
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+    // set the element's new position:
+    elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+    elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+  }
+
+  function closeDragElement() {
+    /* stop moving when mouse button is released:*/
+    document.onmouseup = null;
+    document.onmousemove = null;
+  }
 }

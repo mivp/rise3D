@@ -6,15 +6,18 @@
 #weatherReadout
 {
     z-index: 10;
-    left: 150px;
-    top: 150px;
+    left: 10px;
+    top: 10px;
     width: 250px;
-    height: 150px;
-    position: fixed;
+    max-height: 150px;
+    position: absolute;
     color: #d0d0d0;
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
     font-size: 14px;
     background: #303030;
+    padding: 5 5 5 5;
+    border-radius: 5pt;
+    opacity: 0.8;
 }
 
 #weather_readout_title
@@ -39,15 +42,18 @@
 #groupsPanel
 {
     z-index: 10;
-    right: 100px;
-    bottom: 200px;
+    left: 10px;
+    top: 25%;
+    /*bottom: 200px;*/
     width: 350px;
-    height: 500px;
+    max-height: 500px;
     position: fixed;
-    background: #383038;
-    
+    background: #303030;
+    padding: 5 5 5 5;
     color: #d0d0d0;
-    font-family: 'Questrial', sans-serif;       
+    font-family: 'Questrial', sans-serif; 
+    border-radius: 5pt;
+    opacity: 0.8;
 }
 
 .groupsTable_cbCell
@@ -126,6 +132,8 @@
     position: absolute;
     margin: auto auto;
     background: #383038;
+    border-radius: 5pt;
+    
 }    
 
 .progressHeader
