@@ -68,6 +68,8 @@ function processSceneData(data)
         {
             updateProgressDisplay(0, i);
 
+            console.log("Found scene element, type: " + element.type + ", datatype: " + element.datatype);
+
             if(element.enabled == false)
             {
                 console.log("Scene element with type " + element.type + " not enabled in scene data JSON, skipping..");
@@ -82,7 +84,19 @@ function processSceneData(data)
             else if(element.type == "geometry")
             {
                 // for geometry defined manually
-                await loadShapeData(element);
+                if(element.datatype == "shapes")
+                {
+                    await loadShapeData(element);
+                }
+                else if(element.datatype == "polylines")
+                {
+                    console.log('Found polylines scene element, loading..');
+                    await loadPolylineData(element);
+                }
+                else
+                {
+                    console.log("Unknown geometry element, skipping..");
+                }
             }
             else if(element.type == "file")
             {
@@ -117,7 +131,7 @@ function loadElement(description)
         if(description.datatype == "points")
         {
             element.style = new Cesium.Cesium3DTileStyle({
-                "pointSize" : "5.0"
+                "pointSize" : "3.0"
             });
         }
 
@@ -630,6 +644,7 @@ function processShapeData(description, sourceElement)
         ];
 
         var testColourIndex = Math.trunc(Math.random() * testColours.length);
+        testColourIndex = 6;    // using white for now
         var testColour = new Cesium.Color(testColours[testColourIndex][0], testColours[testColourIndex][1],testColours[testColourIndex][2], 0.5);
 
         var highlight = viewer.scene.primitives.add(new Cesium.ClassificationPrimitive({
@@ -658,6 +673,146 @@ function processShapeData(description, sourceElement)
         g_objToSrcMap.set(highlight.geometryInstances.id, dataObj);
     }
 
+    addDisplayGroup(sourceElement.name + "(" + sourceElement.datatype + ")", grp);
+}
+
+async function loadPolylineData(element)
+{
+    var req = new XMLHttpRequest();
+    req.addEventListener("load", function(evt){
+        processPolylineData(req.responseText, element);
+    });
+    req.open("GET", element.path);
+    req.send();
+    // var response = await fetch(element.path);
+    // var text = await response.text();
+    // await processPolylineData(text);
+}
+
+function processPolylineData(description, sourceElement)
+{
+    console.log("processPolylineData()");
+    // console.log(description);
+    var geometry = JSON.parse(description.toString());
+
+    var i = 0;
+
+    // early grouping work, just create an entity group for each entity
+    var grp = new Cesium.EntityCollection();
+
+    for(var polyline of geometry.polylines)
+    {
+        i++;
+        var degArr = [];
+
+        var avgLong = 0.0;
+        var avgLat = 0.0;
+        var lineWidth = 15.0;
+
+        // for(var line of polyline.lines)
+        for(var point of polyline.points)
+        {
+            // var deg = toLatLon(line.x1, line.y1, 50, 'M');
+            var deg = toLatLon(point.x, point.y, 50, 'M');
+            degArr.push(deg.longitude);
+            degArr.push(deg.latitude);
+
+            var z = 0.0;
+
+            // if this is a 3D polyline, add the Z dimension
+            if(geometry.dimensions && geometry.dimensions == 3)
+            {
+                z = point.z;
+                lineWidth = 5.0;
+            }
+
+            degArr.push(z);
+
+            avgLong += deg.longitude;
+            avgLat += deg.latitude;
+
+            console.log("Point: " + deg.longitude + " deg, " + deg.latitude + " deg" + ", height " + z);
+
+            // deg = toLatLon(line.x2, line.y2, 50, 'M');
+            // degArr.push(deg.longitude);
+            // degArr.push(deg.latitude);
+        }
+
+        // avgLong /= polyline.lines.length;
+        // avgLat /= polyline.lines.length;
+        avgLong /= polyline.points.length;
+        avgLat /= polyline.points.length;
+
+        var ent = viewer.entities.add({
+        // var ent = new Cesium.Entity({
+            // position : Cesium.Cartesian3.fromDegrees(avgLong, avgLat),
+            polyline : {
+                positions: Cesium.Cartesian3.fromDegreesArrayHeights(degArr),
+                width: lineWidth,
+                material: Cesium.Color.BLUE
+                // clampToGround: true
+            },
+            show : true
+        });
+
+        // ent.polyline.material = Cesium.Material.fromType('Color', {
+        //     color : new Cesium.Color(0.0, 0.0, 1.0, 0.0)
+        // });
+
+        grp.add(ent);
+
+        var dataObj = new DataEntity("polyline_" + ent.id);
+        dataObj.type = EntityType.Polyline;
+        dataObj.data = {
+            name : sourceElement.name,
+            // lines : ent.polyline,
+            // material: mat
+        };
+    
+        g_objToSrcMap.set(ent.id, dataObj);
+
+        /*
+        var pl = new Cesium.PolylineCollection();
+        pl.add({
+            show: true,
+            positions : Cesium.Cartesian3.fromDegreesArray(degArr),
+            // cornerType: Cesium.CornerType.MITERED,
+            // material: Cesium.Color.RED,
+            width: 15
+        });
+
+        grp.add(pl);
+
+        var lineGeom = viewer.scene.primitives.add(new Cesium.PolylineGeometry({
+            geometryInstances: new Cesium.GeometryInstance({
+                positions : Cesium.Cartesian3.fromDegreesArray(degArr),
+                width: 15
+                // id: 'volume_' + dataObj.id
+            }),
+            show: true
+            // classificationType : Cesium.ClassificationType.CESIUM_3D_TILE
+        }));
+
+        */
+        // g_objToSrcMap.set(highlight.geometryInstances.id, dataObj);
+
+        // viewer.scene.primitives.add(pl);
+
+        // var dataObj = new DataEntity("shape_" + shape.id);
+        // dataObj.type = EntityType.Building;
+        // dataObj.data = {
+        //     name : shape.id,
+        //     shape : shape.lines
+        // };
+
+        // g_objToSrcMap.set(shapeVol._id, dataObj);
+
+        // g_objToSrcMap.set(highlight.geometryInstances.id, dataObj);
+    }
+
+    // viewer.entities.add(grp);
+
+    console.log("Adding display group " + sourceElement.name + "(" + sourceElement.datatype + ")");
     addDisplayGroup(sourceElement.name + "(" + sourceElement.datatype + ")", grp);
 }
 
@@ -920,8 +1075,8 @@ async function startup()
         }
         else
         {
-            placeholderEntity.name = "Building: " + feature.id._id;
-            placeholderEntity.description = 'Number of occupants: TBA<br/>';
+            placeholderEntity.name = "Entity #" + feature.id._id;
+            placeholderEntity.description = 'Retrieving data for this object is not yet implemented..';
 
             viewer.selectedEntity = placeholderEntity;
             previewEntity = null;
@@ -980,6 +1135,11 @@ function updatePreviewEntity(time, result)
     return description;
 }
 
+/**
+ * 
+ * @param {string} name Name of the layer to add this group to (will be created if it doesn't already exist)
+ * @param {Object} group Group to add to the layer
+ */
 function addDisplayGroup(name, group)
 {
     g_displayGroups.set(name, group);
@@ -1015,10 +1175,98 @@ function addDisplayGroup(name, group)
     var nameCell = row.insertCell();
     nameCell.className = "groupsTable_nameCell";
     nameCell.innerHTML = name;
-    nameCell.onclick = function() {
-        viewer.zoomTo(group);
+
+    // for polyline groups, add a colour changer - this will extend to other types later
+    if(name.indexOf('polyline') != -1)
+    {
+        var clr = document.createElement('input');
+        clr.type = 'color';
+        clr.value = '#0000ff';
+        nameCell.appendChild(clr);
+        nameCell.onclick = function() {
+            viewer.zoomTo(group);
+        }
+        clr.onchange = function(e) {
+            setGroupColour(e.target.value, group);
+        };
     }
+
     dragElement(document.getElementById("groupsPanel"));
+}
+
+function setGroupColour(colour, group)
+{
+    var r = parseInt(colour.substring(1, 3), 16) / 255.0;
+    var g = parseInt(colour.substring(3, 5), 16) / 255.0;
+    var b = parseInt(colour.substring(5, 7), 16) / 255.0;
+    var a = 1.0;
+
+    // group.material = Cesium.Material.fromType('Color', { color: new Cesium.Color(r, g, b, a)});
+    // group.material.uniforms.color = new Cesium.Color(r, g, b, a);
+    // setEntityCollectionColour([r, g, b, a], group);
+
+    // TODO: find out what type of object/group needs to change colour, then handle each accordingly (Cesium object types vary, and textured objects would need a tint, etc.)
+    // check for an entity collection first
+    if(group.values)
+    {
+        console.log('Looking for entities to change colour');
+
+        for(let val of group.values)
+        {
+            var ent = g_objToSrcMap.get(val.id);
+
+            // if(ent && ent.data && ent.data.material)
+            if(ent && ent.data)
+            {
+                if(ent.type == EntityType.Polyline)
+                {
+                    console.log('Found polyline entity, setting colour.. (' + r + ', ' + g + ', ' + b + ', ' + a +')');
+
+                    val.polyline.material = new Cesium.Color(r, g, b, a);
+                }
+
+                // ent.data.material.uniforms.color = new Cesium.Color(r, g, b, a);
+                // ent.data.material 
+            }
+        }
+    }
+    else
+    {
+        console.log('Looking for entity to change colour');
+
+        var ent = g_objToSrcMap.get(group.id);
+    
+        if(ent && ent.data && ent.data.material)
+        {
+            console.log('Found entity material, setting colour..');
+            ent.data.material.uniforms.color = new Cesium.Color(r, g, b, a);
+        }
+    }
+}
+
+function setEntityCollectionColour(colour, collection)
+{
+    if('values' in collection)
+    {
+        for(var e of collection.values)
+        {
+            setEntityCollectionColour(colour, e);
+        }
+    }
+    else
+    {
+        // this seems like a slightly ridiculous way to do this..
+        for(var p in collection)
+        {
+            if(Symbol.iterator in Object(p))
+            {
+                if(_material in p)
+                {
+                    p._material.color.setValue(new Cesium.Color(colour[0], colour[1], colour[2], colour[3]));                
+                }
+            }
+        }
+    }
 }
 
 /**

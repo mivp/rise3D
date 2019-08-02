@@ -27,6 +27,13 @@ EXAMPLE:
             "name" : "buildings_data"
         },
         {
+            "type" : "geometry",
+            "datatype" : "polylines",
+            "path" : "/Assets/shapes/lines.json",
+            "name" : "test_lines",
+            
+        },
+        {
             "type": "file",
             "datatype" : "mesh",
             "path" : "/Assets/meshes/test_mesh.glb",                            // must be in gltf/glb format

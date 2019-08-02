@@ -10,6 +10,7 @@ var EntityType = {
     Marker : "Marker",                          // a single-point marker (e.g. from KML)
     Hygrochron : "Hygrochron",                  // a combined hygrometer/thermometer device
     WeatherCollection : "WeatherCollection",    // a collection of weather snapshots, needs to be associated with a Region
+    Polyline: "Polyline",                       // a line with an arbitrary number of points
     // more to come..
 };
 

@@ -56,6 +56,14 @@
     opacity: 0.8;
 }
 
+#groupsTable
+{
+    overflow-y: scroll;
+    overflow-x: hidden;
+    max-height: 350px;
+    display: block;
+}
+
 .groupsTable_cbCell
 {
     width: 50px;
