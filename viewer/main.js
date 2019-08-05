@@ -93,6 +93,11 @@ function processSceneData(data)
                     console.log('Found polylines scene element, loading..');
                     await loadPolylineData(element);
                 }
+                else if(element.datatype == "markers")
+                {
+                    console.log('Found markers scene element, loading..');
+                    await loadMarkerData(element);
+                }
                 else
                 {
                     console.log("Unknown geometry element, skipping..");
@@ -169,6 +174,17 @@ function loadElement(description)
             
             // addDisplayGroup(description.name + "(" + description.datatype + ")", grp);
             addDisplayGroup(description.name + "(" + description.datatype + ")", element);
+
+            var dataObj = new DataEntity("points_" + description.name);
+            dataObj.type = EntityType.PointCloud;
+            dataObj.data = {
+                name : description.name,
+                source : element
+            };
+    
+            // element.id = dataObj; // TODO: this isn't 100% consistent, need to make all objects reference data entities or have an ID that can be looked up, preferably not a mix of both :)
+    
+            g_objToSrcMap.set("points_" + description.name, dataObj);
         });    
 
         resolve();
@@ -255,6 +271,9 @@ function loadKML(description)
     });
 }
 
+// TESTING ONLY REMOVE ASAP (for console reference to the main mesh)
+var g_mesh = null;
+
 function loadMesh(description)
 {
     return new Promise((resolve, reject) => {
@@ -284,6 +303,12 @@ function loadMesh(description)
 
         // grp.add(model);
         var primitive = viewer.scene.primitives.add(model);
+
+        if(description.path.indexOf('Makassar') != -1)
+        {
+            console.log('Storing global reference to test mesh');
+            g_mesh = model;
+        }
 
         // addDisplayGroup(description.name + "(" + description.datatype + ")", grp);
         addDisplayGroup(description.name + "(" + description.datatype + ")", model);
@@ -676,6 +701,77 @@ function processShapeData(description, sourceElement)
     addDisplayGroup(sourceElement.name + "(" + sourceElement.datatype + ")", grp);
 }
 
+async function loadMarkerData(element)
+{
+    var req = new XMLHttpRequest();
+    req.addEventListener("load", function(evt){
+        processMarkerData(req.responseText, element);
+    });
+    req.open("GET", element.path);
+    req.send();
+    // var response = await fetch(element.path);
+    // var text = await response.text();
+    // await processPolylineData(text);
+}
+
+function processMarkerData(description, sourceElement)
+{
+    console.log("processMarkerData()");
+    // console.log(description);
+    var geometry = JSON.parse(description.toString());
+
+    var i = 0;
+
+    // early grouping work, just create an entity group for each entity
+    var grp = new Cesium.EntityCollection();
+
+    for(var marker of geometry.markers)
+    {
+        i++;
+        var lineWidth = 15.0;
+
+        var deg = toLatLon(marker.x, marker.y, 50, 'M');
+
+        var z = 0.0;
+
+        // if this is a 3D polyline, add the Z dimension
+        if(geometry.dimensions && geometry.dimensions == 3)
+        {
+            z = point.z;
+            lineWidth = 5.0;
+        }
+
+        console.log("Marker: " + deg.longitude + " deg, " + deg.latitude + " deg" + ", height " + z);
+
+        var ent = viewer.entities.add({
+            position: Cesium.Cartesian3.fromDegrees(deg.longitude, deg.latitude),
+            point : { 
+                pixelSize: lineWidth,
+                color: Cesium.Color.BLUE
+            }
+        });
+
+        // ent.polyline.material = Cesium.Material.fromType('Color', {
+        //     color : new Cesium.Color(0.0, 0.0, 1.0, 0.0)
+        // });
+
+        grp.add(ent);
+
+        var dataObj = new DataEntity("markers_" + ent.id);
+        dataObj.type = EntityType.Marker;
+        dataObj.data = {
+            name : sourceElement.name,
+        };
+    
+        g_objToSrcMap.set(ent.id, dataObj);
+    }
+
+    // viewer.entities.add(grp);
+
+    console.log("Adding display group " + sourceElement.name + "(" + sourceElement.datatype + ")");
+    addDisplayGroup(sourceElement.name + "(" + sourceElement.datatype + ")", grp);
+}
+
 async function loadPolylineData(element)
 {
     var req = new XMLHttpRequest();
@@ -749,8 +845,8 @@ function processPolylineData(description, sourceElement)
             polyline : {
                 positions: Cesium.Cartesian3.fromDegreesArrayHeights(degArr),
                 width: lineWidth,
-                material: Cesium.Color.BLUE
-                // clampToGround: true
+                material: Cesium.Color.BLUE,
+                clampToGround: true
             },
             show : true
         });
@@ -1008,6 +1104,7 @@ async function startup()
     // });
 
     var placeholderEntity = new Cesium.Entity();
+    var hoveredEntity = undefined;
     
     viewer.screenSpaceEventHandler.setInputAction(function onLeftClick(movement){
         var feature = viewer.scene.pick(movement.position);
@@ -1096,6 +1193,70 @@ async function startup()
 
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
+    viewer.screenSpaceEventHandler.setInputAction(function(movement){
+        var feature = viewer.scene.pick(movement.endPosition);
+        if(!Cesium.defined(feature) || feature.id == undefined)
+        {
+            return;
+        }
+
+        // console.log('Found feature: ' + feature.id);
+
+        var dataObj = null;
+
+        // first check if the id is a reference to a DataEntity
+        if(feature.id._data_entity_type)
+        {
+            dataObj = feature.id;
+        }
+        // otherwise check if the _id property exists, if it does, check for a matching data entity
+        else if(feature.id._id != undefined)
+        {
+            // dataObj = DataEntity.getById(feature.id._id);
+            dataObj = g_objToSrcMap.get(feature.id._id);
+        }
+
+        // if that didn't work, check the id property (for some objects, this is a reference to a Cesium entity though!)
+        if(dataObj == null || dataObj == undefined)
+        {
+            dataObj = g_objToSrcMap.get(feature.id);
+        }
+
+        if(hoveredEntity)
+        {
+            var attr = hoveredEntity.primitive.getGeometryInstanceAttributes(hoveredEntity.id);
+
+            if(attr)
+            {
+                attr.color = hoveredEntity.primitive.originalColour;
+            }
+
+            // remove the original colour so that it has to be checked again next time
+            delete hoveredEntity.primitive.originalColour;
+            hoveredEntity = undefined;
+        }
+
+        if(feature.primitive && 'getGeometryInstanceAttributes' in feature.primitive)
+        {
+            var attr = feature.primitive.getGeometryInstanceAttributes(feature.id);
+
+            if(attr)
+            {
+                if(feature.primitive.originalColour === undefined)
+                {
+                    feature.primitive.originalColour = attr.color;
+                }
+    
+                hoveredEntity = feature;
+
+                // console.log(attr);
+                // attr.color = Cesium.Color.YELLOW;
+                attr.color = [255, 255, 0, 128];
+            }
+        }
+
+    }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
     viewer.clockViewModel.clock.onTick.addEventListener(function(clock)
     {
         updateFromTime(clock);
@@ -1176,25 +1337,48 @@ function addDisplayGroup(name, group)
     nameCell.className = "groupsTable_nameCell";
     nameCell.innerHTML = name;
 
+    nameCell.onclick = function(e) {
+        console.log('Clicked on type ' + e.target.tagName);
+        if(['TD'].includes(e.target.tagName.toUpperCase())) {
+            viewer.zoomTo(group);
+        }
+    }
+
     // for polyline groups, add a colour changer - this will extend to other types later
-    if(name.indexOf('polyline') != -1)
+    if(name.indexOf('polyline') != -1 || name.indexOf('markers') != -1)
     {
         var clr = document.createElement('input');
         clr.type = 'color';
         clr.value = '#0000ff';
         nameCell.appendChild(clr);
-        nameCell.onclick = function() {
-            viewer.zoomTo(group);
-        }
         clr.onchange = function(e) {
-            setGroupColour(e.target.value, group);
+            setGroupColour(e.target.value, group, { colour: e.target.value });
         };
+        nameCell.appendChild(document.createElement('br'));
+        var sdr = document.createElement('input');
+        sdr.type = 'range';
+        nameCell.appendChild(sdr);
+        sdr.oninput = function(e) {
+            // todo: rename this function 
+            setGroupColour(e.target.value, group, { width: e.target.value });
+        }
+    }
+    if(name.indexOf('points') != -1)
+    {
+        var sdr = document.createElement('input');
+        sdr.type = 'range';
+        sdr.value = 3.0 * (1.0 / 0.2);  // set default value to match initial point size - TODO make this read from saved settings
+        nameCell.appendChild(sdr);
+        sdr.oninput = function(e) {
+            // todo: rename this function 
+            setGroupColour(e.target.value, group, { pointSize: e.target.value });
+        }
     }
 
     dragElement(document.getElementById("groupsPanel"));
 }
 
-function setGroupColour(colour, group)
+function setGroupColour(colour, group, options)
 {
     var r = parseInt(colour.substring(1, 3), 16) / 255.0;
     var g = parseInt(colour.substring(3, 5), 16) / 255.0;
@@ -1209,7 +1393,7 @@ function setGroupColour(colour, group)
     // check for an entity collection first
     if(group.values)
     {
-        console.log('Looking for entities to change colour');
+        // console.log('Looking for entities to change colour');
 
         for(let val of group.values)
         {
@@ -1220,9 +1404,29 @@ function setGroupColour(colour, group)
             {
                 if(ent.type == EntityType.Polyline)
                 {
-                    console.log('Found polyline entity, setting colour.. (' + r + ', ' + g + ', ' + b + ', ' + a +')');
+                    // console.log('Found polyline entity, setting colour.. (' + r + ', ' + g + ', ' + b + ', ' + a +')');
 
-                    val.polyline.material = new Cesium.Color(r, g, b, a);
+                    if('colour' in options)
+                    {
+                        val.polyline.material = new Cesium.Color(r, g, b, a);
+                    }
+
+                    if('width' in options)
+                    {
+                        val.polyline.width = options.width * 0.2;
+                    }
+                }
+                else if(ent.type == EntityType.Marker)
+                {
+                    if('colour' in options)
+                    {
+                        val.point.color = new Cesium.Color(r, g, b, a);
+                    }
+
+                    if('width' in options)
+                    {
+                        val.point.pixelSize = options.width * 0.2;
+                    }
                 }
 
                 // ent.data.material.uniforms.color = new Cesium.Color(r, g, b, a);
@@ -1230,15 +1434,28 @@ function setGroupColour(colour, group)
             }
         }
     }
+    else if('style' in group)
+    {
+        // if(ent.type == EntityType.Points)
+        {
+            if('pointSize' in options)
+            {
+                group.style = new Cesium.Cesium3DTileStyle({
+                    "pointSize" : options.pointSize * 0.2
+                });
+                // group.style.pointSize = options.pointSize * 0.1;
+            }
+        }
+    }
     else
     {
-        console.log('Looking for entity to change colour');
+        // console.log('Looking for entity to change colour');
 
         var ent = g_objToSrcMap.get(group.id);
     
         if(ent && ent.data && ent.data.material)
         {
-            console.log('Found entity material, setting colour..');
+            // console.log('Found entity material, setting colour..');
             ent.data.material.uniforms.color = new Cesium.Color(r, g, b, a);
         }
     }
@@ -1381,7 +1598,14 @@ function dragElement(elmnt) {
 
   function dragMouseDown(e) {
     e = e || window.event;
+    
+    // DW: check that this isn't something you'd want to interact with directly
+    // TODO: make this more robust :)
+    // if(e.target != this) { return; }
+    if(e.target != this && (['INPUT', 'SELECT', 'BUTTON'].includes(e.target.tagName.toUpperCase()))) { return; }
+    
     e.preventDefault();
+    e.stopPropagation();
     // get the mouse cursor position at startup:
     pos3 = e.clientX;
     pos4 = e.clientY;
@@ -1393,6 +1617,7 @@ function dragElement(elmnt) {
   function elementDrag(e) {
     e = e || window.event;
     e.preventDefault();
+    e.stopPropagation();
     // calculate the new cursor position:
     pos1 = pos3 - e.clientX;
     pos2 = pos4 - e.clientY;

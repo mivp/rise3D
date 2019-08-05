@@ -29,10 +29,16 @@ EXAMPLE:
         {
             "type" : "geometry",
             "datatype" : "polylines",
-            "path" : "/Assets/shapes/lines.json",
+            "path" : "/Assets/polylines/lines.json",
             "name" : "test_lines",
             
         },
+        {
+            "type" : "geometry",
+            "datatype" : "markers",
+            "path" : "/Assets/markers/markers.json",
+            "name" : "test_markers"
+        }
         {
             "type": "file",
             "datatype" : "mesh",

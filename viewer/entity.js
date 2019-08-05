@@ -6,6 +6,7 @@ var EntityType = {
     None : "None",                              // entity type not defined, won't be useful
     Building : "Building",                      // a building/residence
     Object : "Object",                          // a physical object, probably represented by a mesh
+    PointCloud : "PointCloud",                  // a physical object represented by a point cloud
     Region : "Region",                          // a geographical region
     Marker : "Marker",                          // a single-point marker (e.g. from KML)
     Hygrochron : "Hygrochron",                  // a combined hygrometer/thermometer device
