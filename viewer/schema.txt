@@ -31,7 +31,8 @@ EXAMPLE:
             "datatype" : "polylines",
             "path" : "/Assets/polylines/lines.json",
             "name" : "test_lines",
-            
+            "default_colour" : [255, 255, 255, 255],                            // RGBA default colour
+            "default_width" : 10                                                // default line width
         },
         {
             "type" : "geometry",

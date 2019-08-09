@@ -279,32 +279,81 @@ function loadMesh(description)
     return new Promise((resolve, reject) => {
         console.log("Loading mesh file: " + new URL(description.path, window.location.href));
 
-        var deg = toLatLon(description.position.x, description.position.y, 50, 'M');
+        var modelMatrix;
 
-        var origin = Cesium.Cartesian3.fromDegrees(deg.longitude, deg.latitude);
-        var modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin);
-        // Cesium.Matrix4.multiplyByTranslation(modelMatrix, new Cesium.Cartesian3(0, 1, 0), modelMatrix);
-        Cesium.Matrix4.multiply(modelMatrix, Cesium.Matrix4.fromTranslationQuaternionRotationScale(
-            new Cesium.Cartesian3(description.transform.translation.x, description.transform.translation.y, description.transform.translation.z),
-            new Cesium.Quaternion.fromHeadingPitchRoll(new Cesium.HeadingPitchRoll(Math.PI * (description.transform.orientation.y / 180), Math.PI * (description.transform.orientation.x / 180), Math.PI * (description.transform.orientation.z / 180))),
-            new Cesium.Cartesian3(description.transform.scale.x, description.transform.scale.y, description.transform.scale.z)),
-            modelMatrix);
+        if(description.position.x > 100000)
+        {
+            var deg = toLatLon(description.position.x, description.position.y, 50, 'M');
+
+            var origin = Cesium.Cartesian3.fromDegrees(deg.longitude, deg.latitude);
+            var modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin);
+            // Cesium.Matrix4.multiplyByTranslation(modelMatrix, new Cesium.Cartesian3(0, 1, 0), modelMatrix);
+            Cesium.Matrix4.multiply(modelMatrix, Cesium.Matrix4.fromTranslationQuaternionRotationScale(
+                new Cesium.Cartesian3(description.transform.translation.x, description.transform.translation.y, description.transform.translation.z),
+                new Cesium.Quaternion.fromHeadingPitchRoll(new Cesium.HeadingPitchRoll(Math.PI * (description.transform.orientation.y / 180), Math.PI * (description.transform.orientation.x / 180), Math.PI * (description.transform.orientation.z / 180))),
+                new Cesium.Cartesian3(description.transform.scale.x, description.transform.scale.y, description.transform.scale.z)),
+                modelMatrix);
+        }
 
         // early grouping work, just create an entity group for each entity
         // var grp = new Cesium.EntityCollection();
-        
-        var model = Cesium.Model.fromGltf({
-            url: description.path,
-            // scale: 0.05,
-            show: true,
-            modelMatrix: modelMatrix,
-            allowPicking: true
-        });
+        var model = null;
+
+        if('matrix' in description)
+        {
+            // var matrix = new Cesium.Matrix4(description.matrix);
+            var matrix = Cesium.Matrix4.fromRowMajorArray(description.matrix);
+
+            // a supplied matrix will override any other transform data
+            model = Cesium.Model.fromGltf({
+                uri: description.path,
+                modelMatrix: matrix,
+                allowPicking: true,
+                show: true
+            });
+
+            var primitive = viewer.scene.primitives.add(model);
+        }
+        else if(description.position.x > 100000)
+        {
+            // var model = Cesium.Model.fromGltf({
+            model = Cesium.Model.fromGltf({
+                    url: description.path,
+                // scale: 0.05,
+                show: true,
+                modelMatrix: modelMatrix,
+                allowPicking: true
+            });
+
+            var primitive = viewer.scene.primitives.add(model);
+        }
+        else
+        {
+            // var ent = viewer.entities.add({
+            //     model: {
+            //         uri: description.path},
+            //     // scale: 0.05,
+            //     show: true,
+            //     // modelMatrix: Cesium.Matrix4.IDENTITY,
+            //     allowPicking: true
+            // });
+
+            // model = ent;
+            // var model = Cesium.Model.fromGltf({
+                model = Cesium.Model.fromGltf({
+                    url: description.path,
+                // scale: 0.05,
+                show: true,
+                allowPicking: true
+            });
+
+            var primitive = viewer.scene.primitives.add(model);            
+        }
 
         // grp.add(model);
-        var primitive = viewer.scene.primitives.add(model);
+        // var primitive = viewer.scene.primitives.add(model);
 
-        if(description.path.indexOf('Makassar') != -1)
+        if(description.path.indexOf('output') != -1)
         {
             console.log('Storing global reference to test mesh');
             g_mesh = model;
@@ -747,7 +796,8 @@ function processMarkerData(description, sourceElement)
             position: Cesium.Cartesian3.fromDegrees(deg.longitude, deg.latitude),
             point : { 
                 pixelSize: lineWidth,
-                color: Cesium.Color.BLUE
+                color: Cesium.Color.BLUE,
+                heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND
             }
         });
 
@@ -803,7 +853,7 @@ function processPolylineData(description, sourceElement)
 
         var avgLong = 0.0;
         var avgLat = 0.0;
-        var lineWidth = 15.0;
+        var lineWidth = 7.5;
 
         // for(var line of polyline.lines)
         for(var point of polyline.points)
@@ -834,6 +884,33 @@ function processPolylineData(description, sourceElement)
             // degArr.push(deg.latitude);
         }
 
+        // if a width is specified, use that
+        if('default_width' in sourceElement)
+        {
+            lineWidth = sourceElement.default_width;
+        }
+
+        var _material = null;
+        var _col = new Cesium.Color();
+
+        if('default_colour' in sourceElement)
+        {
+            // var col = new Cesium.Color();
+
+            // _material = new Cesium.Material.fromType('Color');
+            // _material.uniforms.color = Cesium.Color.fromBytes(
+            Cesium.Color.fromBytes(
+                sourceElement.default_colour[0],
+                sourceElement.default_colour[1],
+                sourceElement.default_colour[2],
+                sourceElement.default_colour[3],
+                _col);
+        }
+        else
+        {
+            _col = Cesium.Color.BLUE;
+        }
+
         // avgLong /= polyline.lines.length;
         // avgLat /= polyline.lines.length;
         avgLong /= polyline.points.length;
@@ -845,7 +922,8 @@ function processPolylineData(description, sourceElement)
             polyline : {
                 positions: Cesium.Cartesian3.fromDegreesArrayHeights(degArr),
                 width: lineWidth,
-                material: Cesium.Color.BLUE,
+                material: _col,
+                // material: Cesium.Color.BLUE,
                 clampToGround: true
             },
             show : true
@@ -1347,9 +1425,31 @@ function addDisplayGroup(name, group)
     // for polyline groups, add a colour changer - this will extend to other types later
     if(name.indexOf('polyline') != -1 || name.indexOf('markers') != -1)
     {
+        // just get the colour from the first element in the group for now
+        // TODO: should provide some info to this function for how to handle default parameters
+        var obj = group.values[0];
+        var col = '#0000ff';
+        var width = 10;
+        
+        if(obj.polyline)
+        {
+            var _c = obj.polyline.material.color._value;
+            var _cArr = new Cesium.Color(_c.red, _c.green, _c.blue, _c.alpha).toBytes();
+            col = '#' +
+                _cArr[0].toString(16).padStart(2, '0') +
+                _cArr[1].toString(16).padStart(2, '0') +
+                _cArr[2].toString(16).padStart(2, '0');
+            console.log('polyline colour: ' + col);
+
+            width = obj.polyline.width;
+
+            console.log('polyline width: ' + width);
+        }
+        
         var clr = document.createElement('input');
         clr.type = 'color';
-        clr.value = '#0000ff';
+        // clr.value = '#0000ff';
+        clr.value = col;
         nameCell.appendChild(clr);
         clr.onchange = function(e) {
             setGroupColour(e.target.value, group, { colour: e.target.value });
@@ -1357,6 +1457,7 @@ function addDisplayGroup(name, group)
         nameCell.appendChild(document.createElement('br'));
         var sdr = document.createElement('input');
         sdr.type = 'range';
+        sdr.value = width * (1.0 / 0.2);
         nameCell.appendChild(sdr);
         sdr.oninput = function(e) {
             // todo: rename this function 
