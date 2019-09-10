@@ -18,6 +18,10 @@ EXAMPLE:
             "layers" : [
                 "layername",                                                    // optional - assign this element to a view layer, for quick access/toggle/manipulation etc.
                 "layer2name",                                                   //            if no layer is specified, then a unique layer with the name of the element will be created
+            ],
+            "tags" : [
+                "tagname",                                                      // optional (but highly recommended) - a set of tags to describe this data, used for
+                                                                                //            search, ID, layer visibility, etc.
             ]
         },
         {

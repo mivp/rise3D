@@ -1,6 +1,7 @@
 var g_sceneData = null;
 var g_defaultElement = null;
 var g_weatherData = null;
+var g_categoryData = null;
 var g_timeIntervals = null; //= new Cesium.TimeIntervalCollection();
 var g_hygroDataIntervals = null;    // JUST FOR TESTING
 var g_hygroData = null;
@@ -8,6 +9,7 @@ var g_hygroData = null;
 var housedata = null;
 var weatherCtr = null;
 var selectedPoint = null;
+var selectedFeature = null;
 var g_ctime = null;
 var g_displayGroups = new Map();
 var g_displayLayers = new Map();    // new approach at grouping data - works like display groups, except that a layer can contain many groups/objects that may not be of similar types
@@ -663,7 +665,9 @@ function processShapeData(description, sourceElement)
         dataObj.type = EntityType.Building;
         dataObj.data = {
             name : shape.id,
-            shape : shape.lines
+            shape : shape.lines,
+            avgLat : avgLat,
+            avgLong: avgLong
         };
 
         g_objToSrcMap.set(shapeVol._id, dataObj);
@@ -1054,6 +1058,43 @@ async function processWeatherData(description)
     });
 }
 
+async function loadCategoryData()
+{
+    var response = await fetch("data_groups.json");
+    var text = await response.text();
+    await processCategoryData(text);
+}
+
+async function processCategoryData(description)
+{
+    return new Promise((resolve, reject) => {
+        console.log("processCategoryData()");
+        console.log(description);
+
+        var g_categoryData = JSON.parse(description);
+
+        for(var layer of g_categoryData.spatial_layers)
+        {
+            var tbl = document.getElementById('layersTable');
+            var row = tbl.insertRow();
+
+            var cbCell = row.insertCell();
+            cbCell.className = "groupsTable_cbCell";
+            
+            var btn = document.createElement('button');
+            btn.textContent = "fiber_manual_record";
+            btn.className = "groupsTable_toggleBtn_small groupsTable_toggleBtn_active material-icons";
+            cbCell.appendChild(btn);
+
+            var nameCell = row.insertCell();
+            nameCell.className = "groupsTable_nameCell";
+            nameCell.innerHTML = layer.name;
+        }
+
+        resolve();
+    });
+}
+
 function getUrlVars() {
     var vars = {};
     var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
@@ -1106,6 +1147,9 @@ async function startup()
 
     // load demo weather data
     await loadWeatherData();
+
+    // load classification and categorisation data
+    await loadCategoryData();
 
     document.getElementById('loaderProgressDisplay').style.display = 'none';
     
@@ -1190,6 +1234,7 @@ async function startup()
         {
             viewer.selectedEntity = null;
             selectedPoint = null;
+            document.getElementById('overlay_entity_data').style.visibility = 'hidden';
             return;
         }
 
@@ -1213,6 +1258,8 @@ async function startup()
         {
             dataObj = g_objToSrcMap.get(feature.id);
         }
+
+        selectedFeature = feature;
 
             // var collection = g_hygroData.get(feature.id._id).intervals;
 
@@ -1247,6 +1294,21 @@ async function startup()
             previewEntity = placeholderEntity;
             previewEntity.description = new Cesium.CallbackProperty(updatePreviewEntity, false);
             previewDataObj = dataObj;
+
+            // show/hide overlay
+            if('avgLong' in dataObj.data)
+            {
+                document.getElementById('overlay_entity_data').style.visibility = 'visible';
+                document.getElementById('overlay_entity_header').innerHTML =
+                    dataObj.type + ':' +
+                    '<br />' + 
+                    dataObj.data.name;
+            }
+            else
+            {
+                document.getElementById('overlay_entity_data').style.visibility = 'hidden';
+            }
+    
         }
         else
         {
@@ -1371,6 +1433,19 @@ function updatePreviewEntity(time, result)
         // console.log("updatePreviewEntity(): not a hygrochron snapshot");
     }
 
+    // testing - get the window position of the entity
+    if(viewer.selectedEntity && previewDataObj.data.avgLat)
+    {
+        var wndPos = Cesium.SceneTransforms.wgs84ToWindowCoordinates(viewer.scene, 
+            Cesium.Cartesian3.fromDegrees(
+                previewDataObj.data.avgLong,
+                previewDataObj.data.avgLat)
+        );
+
+        document.getElementById('overlay_entity_data').style.top = wndPos.y - 75;
+        document.getElementById('overlay_entity_data').style.left = wndPos.x + 50;
+    }
+
     return description;
 }
 
@@ -1402,81 +1477,116 @@ function addDisplayGroup(name, group)
     cbCell.className = "groupsTable_cbCell";
     
     var btn = document.createElement('button');
-    btn.textContent = "check_box";
+    // btn.textContent = "check_box";
     // btn.className = "groupsTable_toggleBtn";
-    btn.className = 'material-icons';
+    // btn.className = 'material-icons';
+    btn.textContent = "fiber_manual_record";
+    btn.className = "groupsTable_toggleBtn_small groupsTable_toggleBtn_active material-icons";
     cbCell.appendChild(btn);
     btn.onclick = function() {
         group.show = !group.show;
-        btn.textContent = (group.show ? "check_box" : "check_box_outline_blank");
+        // btn.textContent = (group.show ? "check_box" : "check_box_outline_blank");
+
+        if(group.show)
+        {
+            btn.classList.add("groupsTable_toggleBtn_active");
+            btn.classList.remove("groupsTable_toggleBtn_inactive");
+        }
+        else
+        {
+            btn.classList.add("groupsTable_toggleBtn_inactive");
+            btn.classList.remove("groupsTable_toggleBtn_active");
+        }
     }
 
     var nameCell = row.insertCell();
     nameCell.className = "groupsTable_nameCell";
     nameCell.innerHTML = name;
 
-    nameCell.onclick = function(e) {
-        console.log('Clicked on type ' + e.target.tagName);
-        if(['TD'].includes(e.target.tagName.toUpperCase())) {
-            viewer.zoomTo(group);
-        }
-    }
+    // zoom to object centroid - not needed for objects anymore, so this is replaced now by a visibility toggle
+    // nameCell.onclick = function(e) {
+    //     console.log('Clicked on type ' + e.target.tagName);
+    //     if(['TD'].includes(e.target.tagName.toUpperCase())) {
+    //         viewer.zoomTo(group);
+    //     }
+    // }
+    nameCell.onclick = function() {
+        group.show = !group.show;
+        // btn.textContent = (group.show ? "check_box" : "check_box_outline_blank");
 
-    // for polyline groups, add a colour changer - this will extend to other types later
-    if(name.indexOf('polyline') != -1 || name.indexOf('markers') != -1)
-    {
-        // just get the colour from the first element in the group for now
-        // TODO: should provide some info to this function for how to handle default parameters
-        var obj = group.values[0];
-        var col = '#0000ff';
-        var width = 10;
-        
-        if(obj.polyline)
+        if(group.show)
         {
-            var _c = obj.polyline.material.color._value;
-            var _cArr = new Cesium.Color(_c.red, _c.green, _c.blue, _c.alpha).toBytes();
-            col = '#' +
-                _cArr[0].toString(16).padStart(2, '0') +
-                _cArr[1].toString(16).padStart(2, '0') +
-                _cArr[2].toString(16).padStart(2, '0');
-            console.log('polyline colour: ' + col);
-
-            width = obj.polyline.width;
-
-            console.log('polyline width: ' + width);
+            btn.classList.add("groupsTable_toggleBtn_active");
+            btn.classList.remove("groupsTable_toggleBtn_inactive");
         }
-        
-        var clr = document.createElement('input');
-        clr.type = 'color';
-        // clr.value = '#0000ff';
-        clr.value = col;
-        nameCell.appendChild(clr);
-        clr.onchange = function(e) {
-            setGroupColour(e.target.value, group, { colour: e.target.value });
-        };
-        nameCell.appendChild(document.createElement('br'));
-        var sdr = document.createElement('input');
-        sdr.type = 'range';
-        sdr.value = width * (1.0 / 0.2);
-        nameCell.appendChild(sdr);
-        sdr.oninput = function(e) {
-            // todo: rename this function 
-            setGroupColour(e.target.value, group, { width: e.target.value });
+        else
+        {
+            btn.classList.add("groupsTable_toggleBtn_inactive");
+            btn.classList.remove("groupsTable_toggleBtn_active");
         }
-    }
-    if(name.indexOf('points') != -1)
+    }    
+
+    // TODO: remove this, just to hide vis parameter editing temporarily
+    var allowEditing = false;
+
+    if(allowEditing)
     {
-        var sdr = document.createElement('input');
-        sdr.type = 'range';
-        sdr.value = 3.0 * (1.0 / 0.2);  // set default value to match initial point size - TODO make this read from saved settings
-        nameCell.appendChild(sdr);
-        sdr.oninput = function(e) {
-            // todo: rename this function 
-            setGroupColour(e.target.value, group, { pointSize: e.target.value });
+        // for polyline groups, add a colour changer - this will extend to other types later
+        if(name.indexOf('polyline') != -1 || name.indexOf('markers') != -1)
+        {
+            // just get the colour from the first element in the group for now
+            // TODO: should provide some info to this function for how to handle default parameters
+            var obj = group.values[0];
+            var col = '#0000ff';
+            var width = 10;
+            
+            if(obj.polyline)
+            {
+                var _c = obj.polyline.material.color._value;
+                var _cArr = new Cesium.Color(_c.red, _c.green, _c.blue, _c.alpha).toBytes();
+                col = '#' +
+                    _cArr[0].toString(16).padStart(2, '0') +
+                    _cArr[1].toString(16).padStart(2, '0') +
+                    _cArr[2].toString(16).padStart(2, '0');
+                console.log('polyline colour: ' + col);
+
+                width = obj.polyline.width;
+
+                console.log('polyline width: ' + width);
+            }
+            
+            var clr = document.createElement('input');
+            clr.type = 'color';
+            // clr.value = '#0000ff';
+            clr.value = col;
+            nameCell.appendChild(clr);
+            clr.onchange = function(e) {
+                setGroupColour(e.target.value, group, { colour: e.target.value });
+            };
+            nameCell.appendChild(document.createElement('br'));
+            var sdr = document.createElement('input');
+            sdr.type = 'range';
+            sdr.value = width * (1.0 / 0.2);
+            nameCell.appendChild(sdr);
+            sdr.oninput = function(e) {
+                // todo: rename this function 
+                setGroupColour(e.target.value, group, { width: e.target.value });
+            }
+        }
+        if(name.indexOf('points') != -1)
+        {
+            var sdr = document.createElement('input');
+            sdr.type = 'range';
+            sdr.value = 3.0 * (1.0 / 0.2);  // set default value to match initial point size - TODO make this read from saved settings
+            nameCell.appendChild(sdr);
+            sdr.oninput = function(e) {
+                // todo: rename this function 
+                setGroupColour(e.target.value, group, { pointSize: e.target.value });
+            }
         }
     }
 
-    dragElement(document.getElementById("groupsPanel"));
+    // dragElement(document.getElementById("groupsPanel"));
 }
 
 function setGroupColour(colour, group, options)

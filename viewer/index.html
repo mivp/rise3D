@@ -17,7 +17,69 @@
     </head>
     <body onload="startup()">
         <!-- <div id="cesiumContainer" style="width: 1920px; height: 1080px"></div> -->
-        <div id="cesiumContainer" style="width: 100%; height: 100%"></div>
+        <div id="mainContainer">
+            <div id="infoLayersContainer">
+                <span class="containerHeader">info layers</span>
+                <br />
+                <br />
+                <!-- groupsTable lists information layers and toggles data visibility -->
+                <table id="groupsTable">
+                    <tr>
+                        <td class="groupsTable_cbCell">
+                            show
+                        </td>
+                        <td class="groupsTable_nameCell_title">
+                            data group name (click to zoom)
+                        </td>
+                    </tr>
+                </table>
+                <br />
+                <!-- sitesTable lists project sites and provides quick jump-to-location -->
+                <span class="containerHeader">sites</span>
+                <table id="sitesTable">
+                    <tr>
+                        <td class="groupsTable_cbCell">
+                        </td>
+                        <td class="groupsTable_nameCell_title">
+                            
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="groupsTable_cbCell">
+                        </td>
+                        <td class="groupsTable_siteSelector_main">
+                            <select id="sitesSelector">
+    
+                            </select>
+                        </td>
+                        <td class="groupsTable_siteSelector_icon">
+                            <i class="material-icons">
+                                    keyboard_arrow_down
+                            </i>
+                        </td>
+                    </tr>
+                </table>
+                <br />
+                <!-- sitesTable lists spatial elements and toggles their visibility -->
+                <span class="containerHeader">spatial layers</span>
+                <table id="layersTable">
+                    <tr>
+                        <td class="groupsTable_cbCell">
+                        </td>
+                        <td class="groupsTable_nameCell_title">
+                            
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="groupsTable_cbCell">
+                        </td>
+                        <td class="groupsTable_siteSelector_main">
+                        </td>
+                    </tr>
+                </table>                  
+            </div>
+            <div id="cesiumContainer"></div>
+        </div>
         <div id="loaderProgressDisplay">
             <span class="progressHeader">
                 Loading data..
@@ -30,7 +92,7 @@
             <br/>
             <div id="weather_readout_content"></div>
         </div>
-        <div id="groupsPanel">
+        <!-- <div id="groupsPanel">
             Data groups:<br />
             <br />
             <table id="groupsTable">
@@ -68,6 +130,11 @@
                     </td>
                 </tr>
             </table>
+        </div> -->
+        <div id="overlay_entity_data">
+            <span id="overlay_entity_header">
+                entity overlay box
+            </span>
         </div>
         <script>
         </script>
