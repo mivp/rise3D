@@ -1,0 +1,79 @@
+{
+    "datagroups" : [
+        {
+            "name" : "Design and Engagement",
+            "tags" : [
+
+            ]
+        },
+        {
+            "name" : "Ecology and Environment",
+            "tags" : [
+
+            ]
+        },
+        {
+            "name" : "Health",
+            "tags" : [
+
+            ]
+        },
+        {
+            "name" : "Wellbeing",
+            "tags" : [
+
+            ]
+        },
+        {
+            "name" : "Policy",
+            "tags" : [
+
+            ]
+        }
+    ],
+    "spatial_layers" : [
+        {
+            "name" : "Point clouds",
+            "tags" : [
+                "pointcloud"
+            ]
+        },
+        {
+            "name" : "Region meshes",
+            "tags" : [
+                "pointcloud_mesh"
+            ]
+        },
+        {
+            "name" : "Orthophotos",
+            "tags" : [
+                "orthophoto"
+            ]
+        },
+        {
+            "name" : "3D buildings",
+            "tags" : [
+                "shape"
+            ]
+        },
+        {
+            "name" : "3D object models",
+            "tags" : [
+                "mesh"
+            ]
+        },
+        {
+            "name" : "Lines and landmarks",
+            "tags" : [
+                "polyline",
+                "marker"
+            ]
+        },
+        {
+            "name" : "Contour lines",
+            "tags" : [
+                "contour"
+            ]
+        }
+    ]
+}
