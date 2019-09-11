@@ -12,7 +12,7 @@ var selectedPoint = null;
 var selectedFeature = null;
 var g_ctime = null;
 var g_displayGroups = new Map();
-var g_displayLayers = new Map();    // new approach at grouping data - works like display groups, except that a layer can contain many groups/objects that may not be of similar types
+var g_displayLayers = new Map();    // new approach at grouping spatial data - works like display groups, except that a layer can contain many groups/objects that may not be of similar types
 
 // loader
 var _g_loaderTotalSteps = 0;
@@ -175,7 +175,12 @@ function loadElement(description)
             // grp.add(element);
             
             // addDisplayGroup(description.name + "(" + description.datatype + ")", grp);
-            addDisplayGroup(description.name + "(" + description.datatype + ")", element);
+            
+            //addDisplayGroup(description.name + "(" + description.datatype + ")", element);  // 20190911 - was working for individual elements, replacing with tags
+            for(var tag of description.tags)
+            {
+                addDisplayGroup(tag, element);
+            }
 
             var dataObj = new DataEntity("points_" + description.name);
             dataObj.type = EntityType.PointCloud;
@@ -230,12 +235,24 @@ function loadKML(description)
         g_kmlSources.set(description.path, dataSource);
 
         var selector = document.getElementById("sitesSelector");
-        var grp = document.createElement("optgroup");
-        // grp.label = description.path;
 
-        grp.label = description.path.substring(description.path.lastIndexOf('/') + 1, description.path.lastIndexOf('.'));
+        var lst = document.createElement('ul');
+        lst.classList.add('siteList');
+        
+        var rootItem = document.createElement('li');
+        rootItem.type = "none";
+        rootItem.innerText = description.path.substring(description.path.lastIndexOf('/') + 1, description.path.lastIndexOf('.'));
+        rootItem.classList.add('siteList_cityname');
 
-        selector.add(grp);
+        var grp = document.createElement('ul');
+
+        // var grp = document.createElement("optgroup");
+        // grp.label = description.path.substring(description.path.lastIndexOf('/') + 1, description.path.lastIndexOf('.'));
+
+        // selector.add(grp);
+        rootItem.appendChild(grp);
+        lst.appendChild(rootItem);
+        selector.appendChild(lst);
 
         var eIndex = 0;
 
@@ -252,10 +269,13 @@ function loadKML(description)
                 continue;
             }
 
-            // selector.add(Option(e.name));
-            opt = new Option(e.name);
-            opt.className = "selector_line";
-            opt.value = e.id;
+            // opt = new Option(e.name);
+            // opt.className = "selector_line";
+            // opt.value = e.id;
+            opt = document.createElement('li'); 
+            opt.innerText = e.name;
+            opt.type = "disc";
+            opt.classList.add('siteList_sitename');
             grp.appendChild(opt);
 
             var dataObj = new DataEntity("kml_marker_" + e.id);
@@ -266,6 +286,24 @@ function loadKML(description)
             };
 
             g_objToSrcMap.set(e.id, dataObj);
+
+            opt.onclick = (evt) => {
+                console.log("Selected site: " + evt.target.innerText);
+        
+                // find the site
+                for(var src of g_kmlSources.values())
+                {
+                    var entity = src.entities.getById(evt.target.innerText);
+        
+                    if(entity != undefined)
+                    {
+                        viewer.zoomTo(entity);
+                        break;
+                    }
+                }
+        
+                // viewer.zoomTo(e.target.value);
+            }            
 
             eIndex++;
         }
@@ -362,7 +400,12 @@ function loadMesh(description)
         }
 
         // addDisplayGroup(description.name + "(" + description.datatype + ")", grp);
-        addDisplayGroup(description.name + "(" + description.datatype + ")", model);
+        // addDisplayGroup(description.name + "(" + description.datatype + ")", model); // 20190911 - was working for individual elements, replacing with tags
+
+        for(var tag of description.tags)
+        {
+            addDisplayGroup(tag, model);
+        }
 
         var dataObj = new DataEntity("model_" + description.name);
         dataObj.type = EntityType.Object;
@@ -500,7 +543,13 @@ async function processHygrodataSummary(description, filenames, datapath, sourceE
         }
     }
 
-    addDisplayGroup(sourceElement.name + "(" + sourceElement.datatype + ")", grp);
+    console.log(sourceElement);
+    // addDisplayGroup(sourceElement.name + "(" + sourceElement.datatype + ")", grp);// 20190911 - was working for individual elements, replacing with tags
+    for(var tag of sourceElement.tags)
+    {
+        addDisplayGroup(tag, grp);
+    }
+
 }
 
 // FIXME: currently storing a reference to each updatable marker here, really should have a dedicated structure and search feature for this
@@ -594,7 +643,12 @@ function loadOrthophoto(description)
 
     // grp.add(tms);
     // addDisplayGroup(description.name + "(" + description.datatype + ")", grp);
-    addDisplayGroup(description.name + "(" + description.datatype + ")", layer);
+    // addDisplayGroup(description.name + "(" + description.datatype + ")", layer); // 20190911 - was working for individual elements, replacing with tags
+
+    for(var tag of description.tags)
+    {
+        addDisplayGroup(tag, layer);
+    }
 }
 
 function loadShapeData(element)
@@ -751,7 +805,12 @@ function processShapeData(description, sourceElement)
         g_objToSrcMap.set(highlight.geometryInstances.id, dataObj);
     }
 
-    addDisplayGroup(sourceElement.name + "(" + sourceElement.datatype + ")", grp);
+    // addDisplayGroup(sourceElement.name + "(" + sourceElement.datatype + ")", grp);   // 20190911 - was working for individual elements, replacing with tags
+
+    for(var tag of sourceElement.tags)
+    {
+        addDisplayGroup(tag, grp);
+    }    
 }
 
 async function loadMarkerData(element)
@@ -823,7 +882,12 @@ function processMarkerData(description, sourceElement)
     // viewer.entities.add(grp);
 
     console.log("Adding display group " + sourceElement.name + "(" + sourceElement.datatype + ")");
-    addDisplayGroup(sourceElement.name + "(" + sourceElement.datatype + ")", grp);
+    // addDisplayGroup(sourceElement.name + "(" + sourceElement.datatype + ")", grp);   // 20190911 - replacing with tags
+
+    for(var tag of sourceElement.tags)
+    {
+        addDisplayGroup(tag, grp);
+    }        
 }
 
 async function loadPolylineData(element)
@@ -991,7 +1055,12 @@ function processPolylineData(description, sourceElement)
     // viewer.entities.add(grp);
 
     console.log("Adding display group " + sourceElement.name + "(" + sourceElement.datatype + ")");
-    addDisplayGroup(sourceElement.name + "(" + sourceElement.datatype + ")", grp);
+    // addDisplayGroup(sourceElement.name + "(" + sourceElement.datatype + ")", grp);   // 20190911 - replacing with tags
+
+    for(var tag of sourceElement.tags)
+    {
+        addDisplayGroup(tag, grp);
+    }        
 }
 
 async function loadWeatherData()
@@ -1071,13 +1140,14 @@ async function processCategoryData(description)
         console.log("processCategoryData()");
         console.log(description);
 
-        var g_categoryData = JSON.parse(description);
+        g_categoryData = JSON.parse(description);
 
-        for(var layer of g_categoryData.spatial_layers)
+        // add data layer categories
+        for(var group of g_categoryData.datagroups)
         {
-            var tbl = document.getElementById('layersTable');
+            var tbl = document.getElementById('groupsTable');
             var row = tbl.insertRow();
-
+    
             var cbCell = row.insertCell();
             cbCell.className = "groupsTable_cbCell";
             
@@ -1088,7 +1158,68 @@ async function processCategoryData(description)
 
             var nameCell = row.insertCell();
             nameCell.className = "groupsTable_nameCell";
+            nameCell.innerHTML = group.name;
+        }
+
+        // add spatial layers
+        for(var layer of g_categoryData.spatial_layers)
+        {
+            // add a visibility flag to the layer for toggling later
+            layer.visible = true;
+
+            var tbl = document.getElementById('layersTable');
+            var row = tbl.insertRow();
+
+            var cbCell = row.insertCell();
+            cbCell.className = "groupsTable_cbCell";
+            
+            let btn = document.createElement('button');
+            btn.textContent = "fiber_manual_record";
+            btn.className = "groupsTable_toggleBtn_small groupsTable_toggleBtn_active material-icons";
+            cbCell.appendChild(btn);
+
+            let layerName = layer.name;
+
+            btn.onclick = function() {
+                var layer = getSpatialLayer(layerName);
+                layer.visible = !layer.visible;
+
+                setVisibilityByTags(layer.tags, layer.visible);
+
+                if(layer.visible)
+                {
+                    btn.classList.add("groupsTable_toggleBtn_active");
+                    btn.classList.remove("groupsTable_toggleBtn_inactive");
+                }
+                else
+                {
+                    btn.classList.add("groupsTable_toggleBtn_inactive");
+                    btn.classList.remove("groupsTable_toggleBtn_active");
+                }                
+            }
+
+            var nameCell = row.insertCell();
+            nameCell.className = "groupsTable_nameCell";
             nameCell.innerHTML = layer.name;
+
+            nameCell.onclick = function()
+            {
+                var layer = getSpatialLayer(layerName);
+                layer.visible = !layer.visible;
+
+                setVisibilityByTags(layer.tags, layer.visible);
+
+                if(layer.visible)
+                {
+                    btn.classList.add("groupsTable_toggleBtn_active");
+                    btn.classList.remove("groupsTable_toggleBtn_inactive");
+                }
+                else
+                {
+                    btn.classList.add("groupsTable_toggleBtn_inactive");
+                    btn.classList.remove("groupsTable_toggleBtn_active");
+                }
+            }
         }
 
         resolve();
@@ -1142,14 +1273,14 @@ async function startup()
     //    geocoder: false
     //});
 
+    // load classification and categorisation types before loading data
+    await loadCategoryData();
+
     // load all scene data
     await loadSceneData();
 
     // load demo weather data
     await loadWeatherData();
-
-    // load classification and categorisation data
-    await loadCategoryData();
 
     document.getElementById('loaderProgressDisplay').style.display = 'none';
     
@@ -1191,28 +1322,29 @@ async function startup()
     viewer.zoomTo(g_defaultElement);
     
     // init any callbacks
-    var selector = document.getElementById("sitesSelector");
-    selector.onchange = (e) => {
-        console.log("Selected site: " + e.target.value);
+    // 20190911 - replaced by events for each site header
+    // var selector = document.getElementById("sitesSelector");
+    // selector.onchange = (e) => {
+    //     console.log("Selected site: " + e.target.value);
 
-        // find the site
-        for(var src of g_kmlSources.values())
-        {
-            var entity = src.entities.getById(e.target.value);
+    //     // find the site
+    //     for(var src of g_kmlSources.values())
+    //     {
+    //         var entity = src.entities.getById(e.target.value);
 
-            if(entity != undefined)
-            {
-                viewer.zoomTo(entity);
-                break;
-            }
-        }
+    //         if(entity != undefined)
+    //         {
+    //             viewer.zoomTo(entity);
+    //             break;
+    //         }
+    //     }
 
-        // viewer.zoomTo(e.target.value);
-    }
+    //     // viewer.zoomTo(e.target.value);
+    // }
 
     // set default site index
     // TODO: remove hard-coded value
-    selector.selectedIndex = 10;
+    // selector.selectedIndex = 10;
 
      ah_sandpit(viewer);
     
@@ -1456,6 +1588,8 @@ function updatePreviewEntity(time, result)
  */
 function addDisplayGroup(name, group)
 {
+    var addToggle = false;
+
     g_displayGroups.set(name, group);
 
     var layer = g_displayLayers.get(name);
@@ -1464,67 +1598,79 @@ function addDisplayGroup(name, group)
     if(layer == undefined)
     {
         layer = [];
+        addToggle = true;
     }
 
     layer.push(group);
 
     g_displayLayers.set(name, layer);
 
-    var tbl = document.getElementById('groupsTable');
-    var row = tbl.insertRow();
+    // not needed for spatial layers anymore
+    /*
+    // TODO: just rebuild the list
+    if(addToggle)
+    {
+        var tbl = document.getElementById('groupsTable');
+        var row = tbl.insertRow();
 
-    var cbCell = row.insertCell();
-    cbCell.className = "groupsTable_cbCell";
-    
-    var btn = document.createElement('button');
-    // btn.textContent = "check_box";
-    // btn.className = "groupsTable_toggleBtn";
-    // btn.className = 'material-icons';
-    btn.textContent = "fiber_manual_record";
-    btn.className = "groupsTable_toggleBtn_small groupsTable_toggleBtn_active material-icons";
-    cbCell.appendChild(btn);
-    btn.onclick = function() {
-        group.show = !group.show;
-        // btn.textContent = (group.show ? "check_box" : "check_box_outline_blank");
+        var cbCell = row.insertCell();
+        cbCell.className = "groupsTable_cbCell";
+        
+        var btn = document.createElement('button');
+        // btn.textContent = "check_box";
+        // btn.className = "groupsTable_toggleBtn";
+        // btn.className = 'material-icons';
+        btn.textContent = "fiber_manual_record";
+        btn.className = "groupsTable_toggleBtn_small groupsTable_toggleBtn_active material-icons";
+        cbCell.appendChild(btn);
+        btn.onclick = function() {
+            for(var grp of layer)
+            {
+                grp.show = !grp.show;
+            }
+            // group.show = !group.show;
+            // btn.textContent = (group.show ? "check_box" : "check_box_outline_blank");
 
-        if(group.show)
-        {
-            btn.classList.add("groupsTable_toggleBtn_active");
-            btn.classList.remove("groupsTable_toggleBtn_inactive");
+            if(group.show)
+            {
+                btn.classList.add("groupsTable_toggleBtn_active");
+                btn.classList.remove("groupsTable_toggleBtn_inactive");
+            }
+            else
+            {
+                btn.classList.add("groupsTable_toggleBtn_inactive");
+                btn.classList.remove("groupsTable_toggleBtn_active");
+            }
         }
-        else
-        {
-            btn.classList.add("groupsTable_toggleBtn_inactive");
-            btn.classList.remove("groupsTable_toggleBtn_active");
-        }
+
+        var nameCell = row.insertCell();
+        nameCell.className = "groupsTable_nameCell";
+        nameCell.innerHTML = name;
+
+        // zoom to object centroid - not needed for objects anymore, so this is replaced now by a visibility toggle
+        // nameCell.onclick = function(e) {
+        //     console.log('Clicked on type ' + e.target.tagName);
+        //     if(['TD'].includes(e.target.tagName.toUpperCase())) {
+        //         viewer.zoomTo(group);
+        //     }
+        // }
+        nameCell.onclick = function() {
+            group.show = !group.show;
+            // btn.textContent = (group.show ? "check_box" : "check_box_outline_blank");
+
+            if(group.show)
+            {
+                btn.classList.add("groupsTable_toggleBtn_active");
+                btn.classList.remove("groupsTable_toggleBtn_inactive");
+            }
+            else
+            {
+                btn.classList.add("groupsTable_toggleBtn_inactive");
+                btn.classList.remove("groupsTable_toggleBtn_active");
+            }
+        }    
     }
-
-    var nameCell = row.insertCell();
-    nameCell.className = "groupsTable_nameCell";
-    nameCell.innerHTML = name;
-
-    // zoom to object centroid - not needed for objects anymore, so this is replaced now by a visibility toggle
-    // nameCell.onclick = function(e) {
-    //     console.log('Clicked on type ' + e.target.tagName);
-    //     if(['TD'].includes(e.target.tagName.toUpperCase())) {
-    //         viewer.zoomTo(group);
-    //     }
-    // }
-    nameCell.onclick = function() {
-        group.show = !group.show;
-        // btn.textContent = (group.show ? "check_box" : "check_box_outline_blank");
-
-        if(group.show)
-        {
-            btn.classList.add("groupsTable_toggleBtn_active");
-            btn.classList.remove("groupsTable_toggleBtn_inactive");
-        }
-        else
-        {
-            btn.classList.add("groupsTable_toggleBtn_inactive");
-            btn.classList.remove("groupsTable_toggleBtn_active");
-        }
-    }    
+    */
 
     // TODO: remove this, just to hide vis parameter editing temporarily
     var allowEditing = false;
@@ -1791,6 +1937,52 @@ function updateFromTime(clock)
 
 }
 
+function toggleSpatialLayer(layerName)
+{
+    var layer = getSpatialLayer(layerName);
+
+    if(!layer)
+    {
+        console.log("'Can't find spatial layer with name "+ layerName);
+
+        return;
+    }
+
+    for(var grp of layer)
+    {
+        grp.show = !grp.show;
+    }
+}
+
+function getSpatialLayer(layerName)
+{
+    for(var layer of g_categoryData.spatial_layers)
+    {
+        if(layer.name == layerName)
+        {
+            return layer;
+        }
+    }
+
+    return null;
+}
+
+function setVisibilityByTags(tags, visibility)
+{
+    // find layers with matching tags
+    for(var tag of tags)
+    {
+        var dispLayer = g_displayLayers.get(tag);
+
+        if(dispLayer)
+        {
+            for(var grp of dispLayer)
+            {
+                grp.show = visibility;
+            }
+        }
+    }
+}
 
 //NH: Draggable divs
 
