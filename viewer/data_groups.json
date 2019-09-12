@@ -3,31 +3,31 @@
         {
             "name" : "Design and Engagement",
             "tags" : [
-
+                "datagrp_design"
             ]
         },
         {
             "name" : "Ecology and Environment",
             "tags" : [
-
+                "datagrp_enviro"
             ]
         },
         {
             "name" : "Health",
             "tags" : [
-
+                "datagrp_health"
             ]
         },
         {
             "name" : "Wellbeing",
             "tags" : [
-
+                "datagrp_wellbeing"
             ]
         },
         {
             "name" : "Policy",
             "tags" : [
-
+                "datagrp_policy"
             ]
         }
     ],

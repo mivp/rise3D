@@ -13,6 +13,7 @@ var selectedFeature = null;
 var g_ctime = null;
 var g_displayGroups = new Map();
 var g_displayLayers = new Map();    // new approach at grouping spatial data - works like display groups, except that a layer can contain many groups/objects that may not be of similar types
+var g_infoLayerContainers = new Map();  // a map of HTML elements (probably all <tr>) that hold toggles for data layers, identified by the data layer tag name
 
 // loader
 var _g_loaderTotalSteps = 0;
@@ -887,7 +888,7 @@ function processMarkerData(description, sourceElement)
 
     for(var tag of sourceElement.tags)
     {
-        addDisplayGroup(tag, grp);
+        addDisplayGroup(tag, grp, sourceElement.name);
     }        
 }
 
@@ -1060,8 +1061,8 @@ function processPolylineData(description, sourceElement)
 
     for(var tag of sourceElement.tags)
     {
-        addDisplayGroup(tag, grp);
-    }        
+        addDisplayGroup(tag, grp, sourceElement.name);
+    }
 }
 
 async function loadWeatherData()
@@ -1146,20 +1147,39 @@ async function processCategoryData(description)
         // add data layer categories
         for(var group of g_categoryData.datagroups)
         {
-            var tbl = document.getElementById('groupsTable');
-            var row = tbl.insertRow();
-    
-            var cbCell = row.insertCell();
-            cbCell.className = "groupsTable_cbCell";
-            
-            var btn = document.createElement('button');
-            btn.textContent = "fiber_manual_record";
-            btn.className = "groupsTable_toggleBtn_small groupsTable_toggleBtn_active material-icons";
-            cbCell.appendChild(btn);
+            // var tbl = document.getElementById('groupsTable');
+            // var row = tbl.insertRow();
 
-            var nameCell = row.insertCell();
-            nameCell.className = "groupsTable_nameCell";
-            nameCell.innerHTML = group.name;
+            // var grpCell = row.insertCell();
+            // grpCell.className = "groupsTable_grpCell";
+            // grpCell.colSpan = 2;
+            // grpCell.innerText = group.name;
+
+            var container = document.getElementById('groupsContainer');
+            var header = document.createElement('div');
+
+            header.className = "groupsTable_grpCell";
+            header.innerText = group.name;
+
+            var tbl = document.createElement('table');
+
+            container.appendChild(header);
+            container.appendChild(tbl);
+
+            // row = tbl.insertRow();
+            g_infoLayerContainers.set(group.tags[0], tbl);
+    
+            // var cbCell = row.insertCell();
+            // cbCell.className = "groupsTable_cbCell";
+            
+            // var btn = document.createElement('button');
+            // btn.textContent = "fiber_manual_record";
+            // btn.className = "groupsTable_toggleBtn_small groupsTable_toggleBtn_active material-icons";
+            // cbCell.appendChild(btn);
+
+            // var nameCell = row.insertCell();
+            // nameCell.className = "groupsTable_nameCell";
+            // nameCell.innerHTML = group.name;
         }
 
         // add spatial layers
@@ -1227,6 +1247,99 @@ async function processCategoryData(description)
     });
 }
 
+async function loadDataSources()
+{
+    var response = await fetch("data_catalog.json");
+    var text = await response.text();
+    await processDataSources(text);
+}
+
+async function processDataSources(description)
+{
+    return new Promise((resolve, reject) => {
+        console.log("processCategoryData()");
+        console.log(description);
+
+        var dataFile = JSON.parse(description);
+
+        // TODO: invoke loader functions for each data object; this should probably be similar to how scene_data.json is loaded
+        for(var src of dataFile.dataSources)
+        {
+            // var tbl = document.getElementById('groupsTable');
+            // var row = tbl.insertRow();
+
+            // var grpCell = row.insertCell();
+            // grpCell.className = "groupsTable_grpCell";
+            // grpCell.colSpan = 2;
+            // grpCell.innerText = group.name;
+            for(var tag of src.tags)
+            {
+                var grpContainer = g_infoLayerContainers.get(tag);
+
+                if(grpContainer !== undefined)
+                {
+                    var tbl = grpContainer;
+                    var row = grpContainer.insertRow();
+            
+                    var cbCell = row.insertCell();
+                    cbCell.className = "groupsTable_cbCell";
+                    
+                    let btn = document.createElement('button');
+                    if(src.availability == "locked")
+                    {
+                        btn.textContent = "lock";
+                    }
+                    else
+                    {
+                        btn.textContent = "fiber_manual_record";
+                    }
+                    btn.className = "groupsTable_toggleBtn_small groupsTable_toggleBtn_active material-icons";
+                    cbCell.appendChild(btn);
+            
+                    let layerName = src.name;
+            
+                    btn.onclick = function() {
+                        // group.show = !group.show;
+            
+                        // if(group.show)
+                        // {
+                        //     btn.classList.add("groupsTable_toggleBtn_active");
+                        //     btn.classList.remove("groupsTable_toggleBtn_inactive");
+                        // }
+                        // else
+                        // {
+                        //     btn.classList.add("groupsTable_toggleBtn_inactive");
+                        //     btn.classList.remove("groupsTable_toggleBtn_active");
+                        // }
+                    }
+            
+                    var nameCell = row.insertCell();
+                    nameCell.className = "groupsTable_nameCell";
+                    nameCell.innerHTML = layerName;
+            
+                    nameCell.onclick = function()
+                    {
+                        // group.show = !group.show;
+            
+                        // if(group.show)
+                        // {
+                        //     btn.classList.add("groupsTable_toggleBtn_active");
+                        //     btn.classList.remove("groupsTable_toggleBtn_inactive");
+                        // }
+                        // else
+                        // {
+                        //     btn.classList.add("groupsTable_toggleBtn_inactive");
+                        //     btn.classList.remove("groupsTable_toggleBtn_active");
+                        // }  
+                    }
+                }
+            }
+        }
+
+        resolve();
+    });
+}
+
 function getUrlVars() {
     var vars = {};
     var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
@@ -1283,6 +1396,9 @@ async function startup()
 
     // load demo weather data
     await loadWeatherData();
+
+    // load external data sources
+    await loadDataSources();
 
     document.getElementById('loaderProgressDisplay').style.display = 'none';
     
@@ -1585,10 +1701,11 @@ function updatePreviewEntity(time, result)
 
 /**
  * 
- * @param {string} name Name of the layer to add this group to (will be created if it doesn't already exist)
+ * @param {string} name Name of the layer/tag to add this group to (will be created if it doesn't already exist)
  * @param {Object} group Group to add to the layer
+ * @param {string} groupName Name of the group to add, optional (only needed for information layers)
  */
-function addDisplayGroup(name, group)
+function addDisplayGroup(name, group, groupName)
 {
     var addToggle = false;
 
@@ -1606,6 +1723,60 @@ function addDisplayGroup(name, group)
     layer.push(group);
 
     g_displayLayers.set(name, layer);
+
+    // check if there is a container that matches the tag name
+    var grpContainer = g_infoLayerContainers.get(name);
+
+    if(grpContainer !== undefined)
+    {
+        var tbl = grpContainer;
+        var row = grpContainer.insertRow();
+
+        var cbCell = row.insertCell();
+        cbCell.className = "groupsTable_cbCell";
+        
+        let btn = document.createElement('button');
+        btn.textContent = "fiber_manual_record";
+        btn.className = "groupsTable_toggleBtn_small groupsTable_toggleBtn_active material-icons";
+        cbCell.appendChild(btn);
+
+        let layerName = name;
+
+        btn.onclick = function() {
+            group.show = !group.show;
+
+            if(group.show)
+            {
+                btn.classList.add("groupsTable_toggleBtn_active");
+                btn.classList.remove("groupsTable_toggleBtn_inactive");
+            }
+            else
+            {
+                btn.classList.add("groupsTable_toggleBtn_inactive");
+                btn.classList.remove("groupsTable_toggleBtn_active");
+            }                
+        }
+
+        var nameCell = row.insertCell();
+        nameCell.className = "groupsTable_nameCell";
+        nameCell.innerHTML = groupName;
+
+        nameCell.onclick = function()
+        {
+            group.show = !group.show;
+
+            if(group.show)
+            {
+                btn.classList.add("groupsTable_toggleBtn_active");
+                btn.classList.remove("groupsTable_toggleBtn_inactive");
+            }
+            else
+            {
+                btn.classList.add("groupsTable_toggleBtn_inactive");
+                btn.classList.remove("groupsTable_toggleBtn_active");
+            }  
+        }
+    }
 
     // not needed for spatial layers anymore
     /*

@@ -75,6 +75,25 @@ EXAMPLE:
     ]
 }
 
+[data_catalog.json] : contains references to all external data sources
+{
+    "dataSources" : [
+        {
+            "name" : "",
+            "datatype" : "",
+            "path" : "/Assets/data/sample_data.json",
+            "tags" : [
+                "tagname",
+            ],
+            "availability" : "locked"                                           // available - data can be accessed without impediment
+                                                                                // unavailable - data is missing
+                                                                                // locked - data is not accessible, regardless of presence
+                                                                                // placeholder - unconfirmed data source
+        }
+    ]
+}
+
+
 external file support:
 
     - "type" must be set to "file", then "datatype" can be:
