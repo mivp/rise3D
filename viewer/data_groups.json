@@ -63,13 +63,6 @@
             ]
         },
         {
-            "name" : "Lines and landmarks",
-            "tags" : [
-                "polyline",
-                "marker"
-            ]
-        },
-        {
             "name" : "Contour lines",
             "tags" : [
                 "contour"
