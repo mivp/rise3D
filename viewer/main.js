@@ -241,7 +241,8 @@ function loadKML(description)
         
         var rootItem = document.createElement('li');
         rootItem.type = "none";
-        rootItem.innerText = description.path.substring(description.path.lastIndexOf('/') + 1, description.path.lastIndexOf('.'));
+        // rootItem.innerText = description.path.substring(description.path.lastIndexOf('/') + 1, description.path.lastIndexOf('.'));
+        rootItem.innerText = description.name;
         rootItem.classList.add('siteList_cityname');
 
         var grp = document.createElement('ul');
@@ -1257,7 +1258,8 @@ async function startup()
 
     // load imagery
     var imageryLayer = viewer.imageryLayers.addImageryProvider(
-        new Cesium.IonImageryProvider({ assetId: 3813 })
+        // new Cesium.IonImageryProvider({ assetId: 3813 })
+        new Cesium.IonImageryProvider({ assetId: 3954 })
     );
 
     weatherCtr = document.getElementById("weatherReadout");
