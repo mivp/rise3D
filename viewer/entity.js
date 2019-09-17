@@ -13,6 +13,7 @@ var EntityType = {
     WeatherCollection : "WeatherCollection",    // a collection of weather snapshots, needs to be associated with a Region
     Polyline: "Polyline",                       // a line with an arbitrary number of points
     // more to come..
+    Site: "Site",                               // a container for a site, describes its location etc
 };
 
 class DataEntity
@@ -32,6 +33,19 @@ class DataEntity
     static getById(id)
     {
         return g_allEntities.get(id);
+    }
+
+    static getSite(name)
+    {
+        for(var ent of g_allEntities.values())
+        {
+            if(ent.type == EntityType.Site && ent.data.name == name)
+            {
+                return ent;
+            }
+        }
+
+        return null;
     }
 }
 

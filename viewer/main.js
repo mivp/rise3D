@@ -1,15 +1,19 @@
 var g_sceneData = null;
+
+// status/current selection
 var g_defaultElement = null;
+var selectedPoint = null;
+var selectedFeature = null;
+
+// loaded data
+// TODO: move these all over to a storage/retrieval system using DataEntity class, these numerous containers are only useful for the prototype stage
 var g_weatherData = null;
 var g_categoryData = null;
 var g_timeIntervals = null; //= new Cesium.TimeIntervalCollection();
 var g_hygroDataIntervals = null;    // JUST FOR TESTING
 var g_hygroData = null;
-// testing
 var housedata = null;
 var weatherCtr = null;
-var selectedPoint = null;
-var selectedFeature = null;
 var g_ctime = null;
 var g_displayGroups = new Map();
 var g_displayLayers = new Map();    // new approach at grouping spatial data - works like display groups, except that a layer can contain many groups/objects that may not be of similar types
@@ -307,19 +311,30 @@ function loadKML(description)
                 source : e
             };
 
+            // create a site dataentity
+            dataObj = new DataEntity(e.id);
+            dataObj.type = EntityType.Site;
+            dataObj.data = {
+                name : e.name,
+                source : e
+            };
+
             g_objToSrcMap.set(e.id, dataObj);
 
             opt.onclick = (evt) => {
                 console.log("Selected site: " + evt.target.innerText);
         
-                // find the site
+                // find the site by its name, from the HTML element clicked
                 for(var src of g_kmlSources.values())
                 {
-                    var entity = src.entities.getById(evt.target.innerText);
+                    // var entity = src.entities.getById(evt.target.innerText);
+                    var entity = DataEntity.getSite(evt.target.innerText);
         
-                    if(entity != undefined)
+                    // if(entity != undefined)
+                    if(entity != null)
                     {
-                        viewer.zoomTo(entity);
+                        // viewer.zoomTo(entity);
+                        viewer.zoomTo(entity.data.source);
                         break;
                     }
                 }
