@@ -257,6 +257,15 @@ function loadKML(description)
                 canvas: viewer.scene.canvas
             });
 
+        // change thickness of the boundary lines
+        for(var ent of dataSource.entities.values)
+        {
+            if(ent.polygon !== undefined)
+            {
+                ent.polygon.outlineWidth = 3.0;
+            }
+        }
+
         g_kmlSources.set(description.path, dataSource);
 
         var selector = document.getElementById("sitesSelector");
@@ -441,7 +450,7 @@ function loadMesh(description)
 
         for(var tag of description.tags)
         {
-            addDisplayGroup(tag, model);
+            addDisplayGroup(tag, model, description.name);
         }
 
         var dataObj = new DataEntity("model_" + description.name);
@@ -795,11 +804,12 @@ function processShapeData(description, sourceElement)
         var shapeVol = viewer.entities.add({
             polygon : {
                 hierarchy: Cesium.Cartesian3.fromDegreesArray(degArr),
-                extrudedHeight: 8,
+                extrudedHeight: 3.1,
                 material: Cesium.Color.RED,
                 shadows: Cesium.ShadowMode.ENABLED,
                 closeTop: true,
-                closeBottom: false
+                closeBottom: false,
+                shadows : Cesium.ShadowMode.ENABLED
             }
         });
 
