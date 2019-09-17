@@ -14,6 +14,7 @@ var g_ctime = null;
 var g_displayGroups = new Map();
 var g_displayLayers = new Map();    // new approach at grouping spatial data - works like display groups, except that a layer can contain many groups/objects that may not be of similar types
 var g_infoLayerContainers = new Map();  // a map of HTML elements (probably all <tr>) that hold toggles for data layers, identified by the data layer tag name
+var g_sites = new Map();            // list of site descriptors, with the region name as key; should be paired with KML data
 
 // loader
 var _g_loaderTotalSteps = 0;
@@ -164,12 +165,14 @@ function loadElement(description)
                 },
                 label : {
                     text : caption,
-                    font : '24pt Segoe UI',
+                    // font : '24pt Segoe UI',
+                    font : '48pt Segoe UI',
                     style : Cesium.LabelStyle.FILL_AND_OUTLINE,
-                    outlineWidth : 1.0,
+                    outlineWidth : 3.0,
                     outlineColor: Cesium.Color.BLACK,
                     verticalOrigin : Cesium.VerticalOrigin.BOTTOM,
-                    pixelOffset : new Cesium.Cartesian2(0, -9)
+                    pixelOffset : new Cesium.Cartesian2(0, -9),
+                    scale: 0.5
                 }
             });
 
@@ -218,14 +221,31 @@ async function loadFile(element)
     {
         await loadOrthophoto(element);
     }
+    else if(element.datatype == "sites")
+    {
+        await loadSitesList(element);
+    }
 }
 
 function loadKML(description)
 {
     return new Promise(async (resolve, reject) => {
-        console.log("Loading KML/KMZ: " + new URL(description.path, window.location.href));
+        var path;
 
-        var dataSource = await Cesium.KmlDataSource.load(description.path);
+        if(description.path)
+        {
+            path = description.path;
+        }
+        else if(description.kml)
+        {
+            path = description.kml;
+        }
+
+        // console.log("Loading KML/KMZ: " + new URL(description.path, window.location.href));
+        console.log("Loading KML/KMZ: " + new URL(path, window.location.href));
+
+        // var dataSource = await Cesium.KmlDataSource.load(description.path);
+        var dataSource = await Cesium.KmlDataSource.load(path);
 
         viewer.dataSources.add(dataSource,
             {
@@ -490,14 +510,17 @@ async function processHygrodataSummary(description, filenames, datapath, sourceE
             },
             label : {
                 text : data[i][5] + " " + data[i][0],
-                font : '16pt Segoe UI',
+                // font : '16pt Segoe UI',
+                font : '32pt Segoe UI',
                 style : Cesium.LabelStyle.FILL_AND_OUTLINE,
-                outlineWidth : 1.5,
+                // outlineWidth : 1.5,
+                outlineWidth : 3.0,
                 outlineColor: Cesium.Color.BLACK,
                 verticalOrigin : Cesium.VerticalOrigin.BOTTOM,
                 pixelOffset : new Cesium.Cartesian2(0, -9),
                 distanceDisplayCondition : new Cesium.DistanceDisplayCondition(0.0, 8000.0),
-                translucencyByDistance : new Cesium.NearFarScalar(1000.0, 1.0, 8000.0, 0.0)
+                translucencyByDistance : new Cesium.NearFarScalar(1000.0, 1.0, 8000.0, 0.0),
+                scale: 0.5
             },
             id : pointID
         });
@@ -653,6 +676,43 @@ function loadOrthophoto(description)
     }
 }
 
+async function loadSitesList(element)
+{
+    console.log("Loading sites list: " + new URL(element.path, window.location.href));
+
+    // first load the descriptor file
+    var response_sitelist = await fetch(element.path);
+    var text_sitelist = await response_sitelist.text();
+
+    // now load the summary CSV
+    var response = await fetch(element.path);
+    var text = await response.text();
+    await processSitesDescriptor(text, text_sitelist, element.datapath, element);
+}
+
+async function processSitesDescriptor(description, sitelist, datapath, sourceElement)
+{
+    return new Promise(async (resolve, reject) => {
+
+        var sitesDescriptor = JSON.parse(description);
+    
+        for(var region of sitesDescriptor.regions)
+        {
+            var site = {};
+
+            site.name = region.name;
+
+            console.log("Loading KML for site list: " + region.kml);
+            await loadKML(region);
+
+            // TODO: now find the loaded KML entry, and associate each site with its entry in the sites descriptor
+            // (for now just to identify which sites are intervention sites)
+        }
+
+        resolve();
+    });
+}
+
 function loadShapeData(element)
 {
     var req = new XMLHttpRequest();
@@ -701,17 +761,30 @@ function processShapeData(description, sourceElement)
 
         // console.log(degArr);
 
+        // create a polyline volume
+        // 20190917 - replaced to create extruded polygons instead
+        // var shapeVol = viewer.entities.add({
+        //     polylineVolume : {
+        //         positions : Cesium.Cartesian3.fromDegreesArray(degArr),
+        //         cornerType: Cesium.CornerType.MITERED,
+        //         material: Cesium.Color.RED,
+        //         shape: [new Cesium.Cartesian2(-1, 0),
+        //             new Cesium.Cartesian2(1, 0),
+        //             new Cesium.Cartesian2(1, 5),
+        //             new Cesium.Cartesian2(-1, 5)],
+        //         shadows: Cesium.ShadowMode.ENABLED,
+        //         fill: true
+        //     }
+        // });
+
         var shapeVol = viewer.entities.add({
-            polylineVolume : {
-                positions : Cesium.Cartesian3.fromDegreesArray(degArr),
-                cornerType: Cesium.CornerType.MITERED,
+            polygon : {
+                hierarchy: Cesium.Cartesian3.fromDegreesArray(degArr),
+                extrudedHeight: 8,
                 material: Cesium.Color.RED,
-                shape: [new Cesium.Cartesian2(-1, 0),
-                    new Cesium.Cartesian2(1, 0),
-                    new Cesium.Cartesian2(1, 5),
-                    new Cesium.Cartesian2(-1, 5)],
                 shadows: Cesium.ShadowMode.ENABLED,
-                fill: true
+                closeTop: true,
+                closeBottom: false
             }
         });
 
