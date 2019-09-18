@@ -1,21 +1,46 @@
 function viewModel() {
     var self = this;
+ 
     self.toggleButtons = [
-        {name: "Intervention", isActive: ko.observable(false) },
-        {name: "Non Intervention", isActive: ko.observable(false) }
+        {name: "Intervention", isActive: ko.observable(true) },
+        {name: "Non Intervention", isActive: ko.observable(true) }
         ];
     self.toggleActive = function(data, event){
         data.isActive(!data.isActive());//toggle  the display of the button active/inactive
+        
+        filterCityList(  );
     }
 
    self.addCity =function(obj){
         self.siteList_cities.push( { name: obj.name, children: ko.observableArray(obj.children)});
     }
     self.siteList_cities = ko.observableArray();
-
+    
     self.siteClick = function(evt){  //first parameter of click event is always the element that was clicked.
-       // console.log(evt);
+        console.log(evt);
         onSiteClick(evt);
+    }
+
+    function filterCityList(){
+        var intervention = self.toggleButtons[0].isActive();
+        var non_intervention = self.toggleButtons[1].isActive();
+        ko.utils.arrayForEach(self.siteList_cities(), function(item){
+            var children = [];
+            if(!intervention && !non_intervention){
+                item.children(children); //empty
+                return;
+            } 
+            var jsonArr = g_siteDescriptors.get(item.name).sites;
+            for(var i = 0; i < jsonArr.length; i++){
+                if(jsonArr[i].intervention=="no" && non_intervention){
+                    children.push({'name': jsonArr[i].name});
+                }
+                if(jsonArr[i].intervention!="no" && intervention){
+                    children.push({'name':jsonArr[i].name});
+                }
+            }
+            item.children(children);
+        });
     }
 
 };
@@ -293,7 +318,7 @@ function loadKML(description)
 
         g_kmlSources.set(description.path, dataSource);
 
-        var selector = document.getElementById("sitesSelector");
+     /*   var selector = document.getElementById("sitesSelector");
 
         var lst = document.createElement('ul');
         lst.classList.add('siteList');
@@ -303,27 +328,27 @@ function loadKML(description)
         // rootItem.innerText = description.path.substring(description.path.lastIndexOf('/') + 1, description.path.lastIndexOf('.'));
         rootItem.innerText = description.name;
 
-   //     ko_viewModel.sitelist_cities()[0]={'name': description.name};
+
         rootItem.classList.add('siteList_cityname'); //e.g. Makassar
  
         var grp = document.createElement('ul');
-
+*/
         var ko_cityObject ={ 'name': description.name, 'children': null};
-        //ko_viewModel.addCity( { name: description.name, children: null});
+       
         // var grp = document.createElement("optgroup");
         // grp.label = description.path.substring(description.path.lastIndexOf('/') + 1, description.path.lastIndexOf('.'));
 
         // selector.add(grp);
-        rootItem.appendChild(grp);
+   /*     rootItem.appendChild(grp);
         lst.appendChild(rootItem);
-        selector.appendChild(lst);
+        selector.appendChild(lst);*/
 
         var eIndex = 0;
         var ko_siteArray = [];
         for(var e of dataSource.entities.values)
         {
        //     console.log("KML entity:");
-       // uncomment     console.log(e.name);
+            console.log(e.name);
 
             updateProgressDisplay(eIndex / dataSource.entities.values.length);
 
@@ -336,11 +361,11 @@ function loadKML(description)
             // opt = new Option(e.name);
             // opt.className = "selector_line";
             // opt.value = e.id;
-            opt = document.createElement('li'); 
+     /*       opt = document.createElement('li'); 
             opt.innerText = e.name;
             opt.type = "disc";
             opt.classList.add('siteList_sitename');
-            grp.appendChild(opt);
+            grp.appendChild(opt);*/
             //MVC, this array will be observed by the view and updated when we filter later.
             ko_siteArray.push( { 'name': e.name, 'id:':e.id});
             var dataObj = new DataEntity("kml_marker_" + e.id);
@@ -360,7 +385,7 @@ function loadKML(description)
 
             g_objToSrcMap.set(e.id, dataObj);
 
-            opt.onclick = (evt) => {
+           /* opt.onclick = (evt) => {
                 console.log("Selected site: " + evt.target.innerText);
         
                 // find the site by its name, from the HTML element clicked
@@ -379,7 +404,7 @@ function loadKML(description)
                 }
         
                 // viewer.zoomTo(e.target.value);
-            }            
+            }       */     
 
             eIndex++;
         }
