@@ -1702,16 +1702,37 @@ async function startup()
             if('avgLong' in dataObj.data)
             {
                 document.getElementById('overlay_entity_data').style.visibility = 'visible';
-                document.getElementById('overlay_entity_header').innerHTML =
-                    dataObj.type + ':' +
-                    '<br />' + 
-                    dataObj.data.name;
+                // document.getElementById('overlay_entity_header').innerHTML =
+                //     dataObj.type + ':' +
+                //     '<br />' + 
+                //     dataObj.data.name;
+                var container = document.getElementById('overlay_entity_header');
+                container.innerHTML = '';
+
+                var hdr = document.createElement('span');
+                hdr.innerHTML = `${dataObj.type}: ${dataObj.data.name}`;
+
+                var tbl = document.createElement('table');
+                var row = tbl.insertRow();
+                row.insertCell(); row.insertCell();
+
+                ['Tenure', 'Flood frequency', 'Water source', 'Water access', 'Toilet location', 'Toilet type', 'Toilet - shared'].map((srcName) => {
+                    row = tbl.insertRow();
+                    var hdrCell = row.insertCell();
+                    hdrCell.classList.add('overlay_entity_fieldname');
+                    hdrCell.innerHTML = `${srcName}:`;
+
+                    var valCell = row.insertCell();
+                    valCell.classList.add('overlay_entity_value');
+                });
+
+                container.appendChild(hdr);
+                container.appendChild(tbl);
             }
             else
             {
                 document.getElementById('overlay_entity_data').style.visibility = 'hidden';
             }
-    
         }
         else
         {

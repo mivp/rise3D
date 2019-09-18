@@ -364,9 +364,22 @@ https://google.github.io/material-design-icons/
 
 #overlay_entity_header
 {
-    color: #d0d0d0;
+    color: darkseagreen;
     font-family: 'Questrial', sans-serif; 
     font-weight: 800;
+}
+
+.overlay_entity_fieldname
+{
+    color: #d0d0d0;
+    font-family: 'Questrial', sans-serif;    
+    font-weight: 600;
+}
+
+.overlay_entity_value
+{
+    color: #d0d0d0;
+    font-family: 'Questrial', sans-serif;    
 }
 
 .interventionSelector
