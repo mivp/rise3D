@@ -200,7 +200,7 @@ body
 /* sites selector */
 #sitesTable
 {
-    overflow-y: auto;
+   overflow-y: scroll;
     overflow-x: hidden;
     /* max-height: 350px; */
     height: 20vh;
@@ -368,3 +368,31 @@ https://google.github.io/material-design-icons/
     font-family: 'Questrial', sans-serif; 
     font-weight: 800;
 }
+
+.interventionSelector
+{
+    display:flex;
+    justify-content: space-between;
+    padding-right:15px;
+    margin-top:5px;
+    margin-bottom:5px;
+}
+
+.toggleButton 
+{
+    width:45%;
+    height:30px;
+    border: 1px solid white;
+    border-radius:5px;
+    line-height: 30px;
+    text-align: center;
+    
+}
+
+.buttonActive 
+{
+    background:#bddbbe;
+    color: #303030;
+    border-color:white;
+}
+
