@@ -18,7 +18,7 @@ var g_ctime = null;
 var g_displayGroups = new Map();
 var g_displayLayers = new Map();    // new approach at grouping spatial data - works like display groups, except that a layer can contain many groups/objects that may not be of similar types
 var g_infoLayerContainers = new Map();  // a map of HTML elements (probably all <tr>) that hold toggles for data layers, identified by the data layer tag name
-var g_sites = new Map();            // list of site descriptors, with the region name as key; should be paired with KML data
+var g_siteDescriptors = new Map();
 
 // loader
 var _g_loaderTotalSteps = 0;
@@ -731,6 +731,7 @@ async function processSitesDescriptor(description, sitelist, datapath, sourceEle
 
             // TODO: now find the loaded KML entry, and associate each site with its entry in the sites descriptor
             // (for now just to identify which sites are intervention sites)
+            g_siteDescriptors.set(region.name, region);
         }
 
         resolve();

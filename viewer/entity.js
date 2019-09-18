@@ -47,6 +47,21 @@ class DataEntity
 
         return null;
     }
+
+    static getEntitiesByType(type)
+    {
+        var entities = [];
+
+        for(var ent of g_allEntities.values())
+        {
+            if(ent.type == type)
+            {
+                entities.push(ent);
+            }
+        }
+
+        return entities;
+    }
 }
 
 var g_allEntities = new Map();
