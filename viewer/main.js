@@ -1,3 +1,28 @@
+function viewModel() {
+    var self = this;
+    self.toggleButtons = [
+        {name: "Intervention", isActive: ko.observable(false) },
+        {name: "Non Intervention", isActive: ko.observable(false) }
+        ];
+    self.toggleActive = function(data, event){
+        data.isActive(!data.isActive());//toggle  the display of the button active/inactive
+    }
+
+   self.addCity =function(obj){
+        self.siteList_cities.push( { name: obj.name, children: ko.observableArray(obj.children)});
+    }
+    self.siteList_cities = ko.observableArray();
+
+    self.siteClick = function(evt){  //first parameter of click event is always the element that was clicked.
+       // console.log(evt);
+        onSiteClick(evt);
+    }
+
+};
+
+
+var ko_viewModel;
+
 var g_sceneData = null;
 
 // status/current selection
@@ -76,7 +101,7 @@ function processSceneData(data)
         {
             updateProgressDisplay(0, i);
 
-            console.log("Found scene element, type: " + element.type + ", datatype: " + element.datatype);
+        //uncomment    console.log("Found scene element, type: " + element.type + ", datatype: " + element.datatype);
 
             if(element.enabled == false)
             {
@@ -277,10 +302,14 @@ function loadKML(description)
         rootItem.type = "none";
         // rootItem.innerText = description.path.substring(description.path.lastIndexOf('/') + 1, description.path.lastIndexOf('.'));
         rootItem.innerText = description.name;
-        rootItem.classList.add('siteList_cityname');
 
+   //     ko_viewModel.sitelist_cities()[0]={'name': description.name};
+        rootItem.classList.add('siteList_cityname'); //e.g. Makassar
+ 
         var grp = document.createElement('ul');
 
+        var ko_cityObject ={ 'name': description.name, 'children': null};
+        //ko_viewModel.addCity( { name: description.name, children: null});
         // var grp = document.createElement("optgroup");
         // grp.label = description.path.substring(description.path.lastIndexOf('/') + 1, description.path.lastIndexOf('.'));
 
@@ -290,11 +319,11 @@ function loadKML(description)
         selector.appendChild(lst);
 
         var eIndex = 0;
-
+        var ko_siteArray = [];
         for(var e of dataSource.entities.values)
         {
-            console.log("KML entity:");
-            console.log(e.name);
+       //     console.log("KML entity:");
+       // uncomment     console.log(e.name);
 
             updateProgressDisplay(eIndex / dataSource.entities.values.length);
 
@@ -312,7 +341,8 @@ function loadKML(description)
             opt.type = "disc";
             opt.classList.add('siteList_sitename');
             grp.appendChild(opt);
-
+            //MVC, this array will be observed by the view and updated when we filter later.
+            ko_siteArray.push( { 'name': e.name, 'id:':e.id});
             var dataObj = new DataEntity("kml_marker_" + e.id);
             dataObj.type = EntityType.Marker;
             dataObj.data = {
@@ -338,7 +368,7 @@ function loadKML(description)
                 {
                     // var entity = src.entities.getById(evt.target.innerText);
                     var entity = DataEntity.getSite(evt.target.innerText);
-        
+                    console.log(entity.data);
                     // if(entity != undefined)
                     if(entity != null)
                     {
@@ -353,10 +383,31 @@ function loadKML(description)
 
             eIndex++;
         }
+        ko_cityObject.children = ko_siteArray;
+        ko_viewModel.addCity(ko_cityObject);
         resolve();
     });
 }
-
+//NH
+function onSiteClick(evt){
+    //event has name, id, 
+   console.log("Selected site: " + evt.name);
+        
+                // find the site by its name, from the HTML element clicked
+                for(var src of g_kmlSources.values())
+                {
+                    // var entity = src.entities.getById(evt.target.innerText);
+                    var entity = DataEntity.getSite(evt.name);
+                    console.log(entity.data);
+                    // if(entity != undefined)
+                    if(entity != null)
+                    {
+                        // viewer.zoomTo(entity);
+                        viewer.zoomTo(entity.data.source);
+                        break;
+                    }
+                }  
+}
 // TESTING ONLY REMOVE ASAP (for console reference to the main mesh)
 var g_mesh = null;
 
@@ -482,12 +533,12 @@ async function loadHygrodata(description)
 
 async function processHygrodataSummary(description, filenames, datapath, sourceElement)
 {
-    console.log("processHygrodataSummary()");
-    console.log(description);
+   //uncomment console.log("processHygrodataSummary()");
+   // console.log(description);
 
     var dataFilenames = filenames.split('\n');
 
-    console.log(dataFilenames);
+   //uncomment console.log(dataFilenames);
 
     // early grouping work, just create an entity group for each entity
     var grp = new Cesium.EntityCollection();
@@ -501,8 +552,8 @@ async function processHygrodataSummary(description, filenames, datapath, sourceE
     {
         var fields = line.split(',');
 
-        console.log("Line:");
-        console.log(fields);
+    // uncomment    console.log("Line:");
+  //      console.log(fields);
 
         if(fields.length < 2)
         {
@@ -565,7 +616,7 @@ async function processHygrodataSummary(description, filenames, datapath, sourceE
         var foundDataFile = false;
         var targetFile = "";
 
-        console.log("pointID for this marker: " + pointID);
+     //uncomment   console.log("pointID for this marker: " + pointID);
 
         for(let filename of dataFilenames)
         {
@@ -583,7 +634,7 @@ async function processHygrodataSummary(description, filenames, datapath, sourceE
 
         if(foundDataFile)
         {
-            console.log("Matched file " + targetFile + " from pointID " + pointID);
+      // uncomment     console.log("Matched file " + targetFile + " from pointID " + pointID);
 
             // now load the summary CSV
             var response = await fetch(datapath + "/" + targetFile);
@@ -592,7 +643,7 @@ async function processHygrodataSummary(description, filenames, datapath, sourceE
         }
     }
 
-    console.log(sourceElement);
+//uncomment    console.log(sourceElement);
     // addDisplayGroup(sourceElement.name + "(" + sourceElement.datatype + ")", grp);// 20190911 - was working for individual elements, replacing with tags
     for(var tag of sourceElement.tags)
     {
@@ -605,7 +656,7 @@ async function processHygrodataSummary(description, filenames, datapath, sourceE
 async function processHygrodataSeries(rawdata, pointID, marker, sourceElement, markerName, dataObj)
 {
     return new Promise((resolve, reject) => {
-        console.log("processHygrodataSeries()");
+      //  console.log("processHygrodataSeries()");
 
         var lines = rawdata.split('\n');
         var data = [];
@@ -954,7 +1005,7 @@ function processMarkerData(description, sourceElement)
             lineWidth = 5.0;
         }
 
-        console.log("Marker: " + deg.longitude + " deg, " + deg.latitude + " deg" + ", height " + z);
+   //uncomment     console.log("Marker: " + deg.longitude + " deg, " + deg.latitude + " deg" + ", height " + z);
 
         var ent = viewer.entities.add({
             position: Cesium.Cartesian3.fromDegrees(deg.longitude, deg.latitude),
@@ -1006,7 +1057,7 @@ async function loadPolylineData(element)
 
 function processPolylineData(description, sourceElement)
 {
-    console.log("processPolylineData()");
+ //uncomment   console.log("processPolylineData()");
     // console.log(description);
     var geometry = JSON.parse(description.toString());
 
@@ -1046,7 +1097,7 @@ function processPolylineData(description, sourceElement)
             avgLong += deg.longitude;
             avgLat += deg.latitude;
 
-            console.log("Point: " + deg.longitude + " deg, " + deg.latitude + " deg" + ", height " + z);
+         //   console.log("Point: " + deg.longitude + " deg, " + deg.latitude + " deg" + ", height " + z);
 
             // deg = toLatLon(line.x2, line.y2, 50, 'M');
             // degArr.push(deg.longitude);
@@ -1155,7 +1206,7 @@ function processPolylineData(description, sourceElement)
 
     // viewer.entities.add(grp);
 
-    console.log("Adding display group " + sourceElement.name + "(" + sourceElement.datatype + ")");
+  //uncomment  console.log("Adding display group " + sourceElement.name + "(" + sourceElement.datatype + ")");
     // addDisplayGroup(sourceElement.name + "(" + sourceElement.datatype + ")", grp);   // 20190911 - replacing with tags
 
     for(var tag of sourceElement.tags)
@@ -1189,15 +1240,15 @@ async function loadWeatherData()
 async function processWeatherData(description)
 {
     return new Promise((resolve, reject) => {
-        console.log("processWeatherData()");
-        console.log(description);
+     //   console.log("processWeatherData()");
+     //uncomment   console.log(description);
 
         var g_weatherData = JSON.parse(description);
         var intervals = new Array();
 
         for(var snapshot of g_weatherData.weather)
         {
-            console.log("Snapshot time " + snapshot.dt);
+    //        console.log("Snapshot time " + snapshot.dt);
 
             var interval = new Cesium.TimeInterval(
                 {
@@ -1217,7 +1268,7 @@ async function processWeatherData(description)
                 }
             );
 
-            console.log("Adding interval");
+     //       console.log("Adding interval");
             intervals.push(interval);
         }
 
@@ -1356,8 +1407,8 @@ async function loadDataSources()
 async function processDataSources(description)
 {
     return new Promise((resolve, reject) => {
-        console.log("processCategoryData()");
-        console.log(description);
+//        console.log("processCategoryData()");
+ //uncomment       console.log(description);
 
         var dataFile = JSON.parse(description);
 
@@ -1456,6 +1507,9 @@ function ah_sandpit(viewer)
 
 async function startup()
 {
+    //initialise mvc
+    ko_viewModel = new viewModel();
+    ko.applyBindings(ko_viewModel);
     // create a Cesium viewer and load Earth data
     
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0ZDgyMmRiYS0zMjMyLTQxMzMtYTNiMC05ZmZiZTRkZWQ2YTQiLCJpZCI6ODMyMywic2NvcGVzIjpbImFzciIsImdjIl0sImlhdCI6MTU1MTc1MzAzNX0.wDKGdaNCaseIbASuOFeSRdXF-Ch4uGfMQdeVBKTCzNU';
@@ -2309,3 +2363,5 @@ function dragElement(elmnt) {
     document.onmousemove = null;
   }
 }
+
+

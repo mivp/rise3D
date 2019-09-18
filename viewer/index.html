@@ -3,6 +3,7 @@
     <head>
         <!-- <script src="https://cesiumjs.org/releases/1.52/Build/Cesium/Cesium.js"></script> -->
         <script src="https://cesiumjs.org/releases/1.60/Build/Cesium/Cesium.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.0/knockout-min.js"></script>
         <!-- <script data-main="main.js" src="require.js"></script>        
         <link rel="modulepreload" href="utm.js">
         <script type="module" src="utm.js"></script> -->
@@ -10,6 +11,7 @@
         <script src="entity.js"></script>
         <script src="main.js"></script>
         <script src="../assets/housedata.js"></script>
+        
         <!-- <link href="https://cesiumjs.org/releases/1.52/Build/Cesium/Widgets/widgets.css" rel="stylesheet"> -->
         <link href="https://cesiumjs.org/releases/1.60/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css?family=Questrial" rel="stylesheet">        
@@ -38,19 +40,48 @@
                 <br />
                 <div class="infoTable_divider"></div>
                 <!-- sitesTable lists project sites and provides quick jump-to-location -->
+                <div id='sitesTable'>
                 <span class="containerHeader">site browser</span>
-                <table id="sitesTable">
-                    <tr>
-                        <td class="groupsTable_cbCell">
+              <!--  <table id="sitesTable">
+                    <tr> -->
+                        <div class="interventionSelector" data-bind="foreach: toggleButtons">
+                            <!-- 2 buttons which are togglable -->
+                            <div  class="toggleButton" data-bind="click: $parent.toggleActive, css: {'buttonActive': isActive}"><span  data-bind='text: name'></span> </div>
+                       
+                            
+                        </div>
+                           <div >
+                    <ul class="siteList" data-bind= "foreach: siteList_cities">
+                        <li class="siteList_cityname"  >
+                            <span data-bind= 'text: name'></span>
+                            <ul data-bind="foreach: children">
+                                <li type="disc" data-bind='click: $root.siteClick' class="siteList_sitename" >
+                                    <span data-bind= 'text:name'></span>
+                                </li>
+                            </ul>
+                        </li>
+
+                    </ul>
+                </div>
+
+                  <!--      <table  data-bind="foreach: sites">
+                            <td class="sitesSelector" cols[an="2">
+                                <ul class="siteList"></ul>
+                            </td>
+
+                        </div>
+                  <!--      <td class="groupsTable_cbCell">
                             <button class="groupsTable_toggleBtn_small groupsTable_toggleBtn_active material-icons">fiber_manual_record</button>
-                        </td>
+                        </td> -
                         <td class="groupsTable_nameCell_title">
                             intervention sites
-                        </td>
-                    </tr>
+                        </td> 
+                    </tr>-->
+                  <table>
                     <tr>
-                        <td id="sitesSelector" colspan="2">
-                            
+                        <td id="sitesSelector" colspan="2" >
+                          
+
                         </td>
                         <!-- <td class="groupsTable_cbCell">
                         </td> -->
@@ -64,9 +95,11 @@
                                     keyboard_arrow_down
                             </i>
                         </td> -->
-                    </tr>
+                    </tr> 
                 </table>
+             
                 <br />
+                </div>
                 <div class="infoTable_divider"></div>
                 <!-- sitesTable lists spatial elements and toggles their visibility -->
                 <span class="containerHeader">spatial layers</span>
@@ -86,6 +119,7 @@
                     </tr>
                 </table>                  
             </div>
+
             <div id="cesiumContainer"></div>
         </div>
         <div id="loaderProgressDisplay">
