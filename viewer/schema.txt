@@ -100,6 +100,33 @@ EXAMPLE:
     ]
 }
 
+[data_groups.json] : defines categories of data and associated tags
+{
+    "datagroups" : [                                                            // these groups will appear in the 'info layers' panel
+        {
+            "name" : "Group name",
+            "tags" : [
+                "tagname",
+            ]
+        }
+    ],
+    "spatial_layers" : [
+        {
+            "name" : "Layer name",
+            "tags" : [
+                "tagname",
+            ]
+        }
+    ]
+}
+
+Spatial layer tags:
+
+    - pointcloud :      Point clouds representing spatial data
+    - pointcloud_mesh : Meshed versions of point clouds
+    - orthophoto :      Orthophotos of spatial regions, terrain etc.
+    - shape :           Shape files representing buildings etc.
+    - mesh_spatial :    3D meshes that represent props, landmarks, etc. but are not considered design elements
 
 external file support:
 

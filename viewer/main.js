@@ -69,6 +69,7 @@ var g_displayGroups = new Map();
 var g_displayLayers = new Map();    // new approach at grouping spatial data - works like display groups, except that a layer can contain many groups/objects that may not be of similar types
 var g_infoLayerContainers = new Map();  // a map of HTML elements (probably all <tr>) that hold toggles for data layers, identified by the data layer tag name
 var g_siteDescriptors = new Map();
+var g_dataCatalog = null;
 
 // loader
 var _g_loaderTotalSteps = 0;
@@ -270,6 +271,12 @@ async function loadFile(element)
     {
         // loads a set of sample data from a csv, expects a specific format here, so this one is purpose-built
         await loadHygrodata(element);
+    }
+    else if(element.datatype == "survey_csv")
+    {
+        // loads survey data to associate with houses - PROTOTYPE ONLY
+        // TODO: replace with much more flexible version
+        await loadSurveyData(element);
     }
     else if(element.datatype == "orthophoto")
     {
@@ -751,6 +758,42 @@ async function processHygrodataSeries(rawdata, pointID, marker, sourceElement, m
     });
 }
 
+async function loadSurveyData(description)
+{
+    console.log(`Loading CSV survey file: ${description.path}`);
+
+    // now load the summary CSV
+    var response = await fetch(description.path);
+    var text = await response.text();
+    await processSurveyData(text, description);
+}
+
+async function processSurveyData(csvText, description)
+{
+    console.log('Processing CSV survey file..');
+
+    var csvData = Papa.parse(csvText, { header: true });
+
+    console.log(csvData);
+
+    // TODO: add a post-processing step after all files are loaded to connect data sources that may have loaded in an unpredictable order
+    // for now, assume buildings are loaded and process..
+    for(var record of csvData.data)
+    {
+        var building = DataEntity.getEntity(EntityType.Building, "house_" + record.extract_house_no);
+
+        if(building != null)
+        {
+            console.log("Adding survey data to building house_" + record.extract_house_no + "..");
+            building.data.surveyData = record;
+        }
+        else
+        {
+            console.log("Can't find building house_" + record.extract_house_no + ", skipping");
+        }
+    }
+}
+
 function loadOrthophoto(description)
 {
     console.log("Loading orthophoto file: " + new URL(description.path, window.location.href));
@@ -897,6 +940,7 @@ function processShapeData(description, sourceElement)
         dataObj.data = {
             name : shape.id,
             shape : shape.lines,
+            obj : shapeVol,
             avgLat : avgLat,
             avgLong: avgLong
         };
@@ -1436,6 +1480,7 @@ async function processDataSources(description)
  //uncomment       console.log(description);
 
         var dataFile = JSON.parse(description);
+        g_dataCatalog = dataFile;   // remember the data catalog for now, this should probably be put in a central location
 
         // TODO: invoke loader functions for each data object; this should probably be similar to how scene_data.json is loaded
         for(var src of dataFile.dataSources)
@@ -1492,7 +1537,7 @@ async function processDataSources(description)
                     nameCell.className = "groupsTable_nameCell";
                     nameCell.innerHTML = layerName;
             
-                    nameCell.onclick = function()
+                    nameCell.onclick = function(e)
                     {
                         // group.show = !group.show;
             
@@ -1505,7 +1550,17 @@ async function processDataSources(description)
                         // {
                         //     btn.classList.add("groupsTable_toggleBtn_inactive");
                         //     btn.classList.remove("groupsTable_toggleBtn_active");
-                        // }  
+                        // }
+                        var dataSource = null;
+
+                        for(var src of g_dataCatalog.dataSources)
+                        {
+                            if(src.name == e.target.innerText)
+                            {
+                                applyDataSourceToBuildings(src.fieldname);
+                            }
+                        }
+                        
                     }
                 }
             }
@@ -1735,20 +1790,25 @@ async function startup()
                 container.innerHTML = '';
 
                 var hdr = document.createElement('span');
-                hdr.innerHTML = `${dataObj.type}: ${dataObj.data.name}`;
+                hdr.innerHTML = `${dataObj.data.name}`;
 
                 var tbl = document.createElement('table');
                 var row = tbl.insertRow();
                 row.insertCell(); row.insertCell();
 
-                ['Tenure', 'Flood frequency', 'Water source', 'Water access', 'Toilet location', 'Toilet type', 'Toilet - shared'].map((srcName) => {
+                var building = DataEntity.getEntity(EntityType.Building, dataObj.data.name);
+
+                ['Tenure', 'Flood frequency', 'Water source', 'Water access', 'Toilet location', 'Toilet type', 'Toilet - shared'].map((srcName, index) => {
                     row = tbl.insertRow();
                     var hdrCell = row.insertCell();
                     hdrCell.classList.add('overlay_entity_fieldname');
                     hdrCell.innerHTML = `${srcName}:`;
 
+                    var colNames = ['tenure1', 'flood1_freq', 'water_source1', 'water_access', 'toilet_locn', 'toilet_type', 'toilet_share_no'];
+
                     var valCell = row.insertCell();
                     valCell.classList.add('overlay_entity_value');
+                    valCell.innerHTML = building.data.surveyData[colNames[index]];
                 });
 
                 container.appendChild(hdr);
@@ -2352,6 +2412,48 @@ function setVisibilityByTags(tags, visibility)
             {
                 grp.show = visibility;
             }
+        }
+    }
+}
+
+// produces a visualisation of a data source to the building shapes - ONLY FOR PROTOTYPE
+// this feature needs a more general-purpose solution, so this function is only for demonstration for now
+function applyDataSourceToBuildings(source)
+{
+    if(source == 'tenure1')
+    {
+        var buildings = DataEntity.getEntitiesByType(EntityType.Building);
+
+        for(var b of buildings)
+        {
+            var feature = b.data.obj;
+            
+            if(feature.polygon)
+            {
+                var testColours = [
+                    [1.0, 0.0, 0.0],
+                    [0.0, 1.0, 0.0],
+                    [0.0, 0.0, 1.0],
+                    [1.0, 1.0, 0.0],
+                    [0.0, 1.0, 1.0],
+                    [1.0, 0.0, 1.0],
+                    [1.0, 1.0, 1.0],
+                ];
+
+                var colourIndex = parseInt(b.data.surveyData.tenure1);
+
+                if(isNaN(colourIndex) || (colourIndex < 0 && colourIndex >= testColours.length))
+                {
+                    colourIndex = 0;
+                }
+
+                var r = Cesium.Color.floatToByte(testColours[colourIndex][0]);
+                var g = Cesium.Color.floatToByte(testColours[colourIndex][1]);
+                var b = Cesium.Color.floatToByte(testColours[colourIndex][2]);
+                var a = 255;
+
+                feature.polygon.material.color.setValue(Cesium.Color.fromBytes(r, g, b, a));
+            }            
         }
     }
 }

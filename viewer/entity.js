@@ -62,6 +62,20 @@ class DataEntity
 
         return entities;
     }
+
+    // try to avoid using this, it's bound to be a bit slow
+    static getEntity(type, name)
+    {
+        for(var ent of g_allEntities.values())
+        {
+            if(ent.type == type && ent.data.name == name)
+            {
+                return ent;
+            }
+        }
+
+        return null;
+    }
 }
 
 var g_allEntities = new Map();
