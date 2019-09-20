@@ -1,5 +1,7 @@
 function viewModel() {
     var self = this;
+    self.siteList_cities = ko.observableArray();
+    self.infoLayers = ko.observableArray([]);
  
     self.toggleButtons = [
         {name: "Intervention", isActive: ko.observable(true) },
@@ -14,13 +16,44 @@ function viewModel() {
    self.addCity =function(obj){
         self.siteList_cities.push( { name: obj.name, children: ko.observableArray(obj.children)});
     }
-    self.siteList_cities = ko.observableArray();
-    
+ 
     self.siteClick = function(evt){  //first parameter of click event is always the element that was clicked.
         console.log(evt);
         onSiteClick(evt);
     }
 
+    self.addInfoLayer = function(layer){
+        self.infoLayers.push( { name: layer.name, tags: layer.tags, children: ko.observableArray()})
+
+    }
+
+    self.infoLayerClick = function(parent,object){
+        object.isActive(!object.isActive());
+        layerClicked(object.name, object.isActive(), parent.tags[0]);
+   //     console.log(parent);
+    }
+    self.addChildToLayer = function(tag,name){
+        var layerIndex = self.getInfoLayerIndex(tag);
+        if(layerIndex!=-1 && layerIndex != undefined){
+          //  self.infoLayers()[layerIndex].addChild(name);  //add to object
+            //also add to observable array
+            self.infoLayers()[layerIndex].children.push({"name" : name, "isActive": ko.observable(false)});
+        } else {
+            console.log("Layer not defined? " + tag + " - " + name);
+        }
+    }
+
+    self.getInfoLayerIndex = function(tag){
+       // console.log(self.infoLayers);
+        for(var i = 0; i < self.infoLayers().length; i ++){
+            if(self.infoLayers()[i].tags.indexOf(tag)>=0){
+                return i;
+                break;
+            }
+        }
+        console.log("Tag not found in InfoLayers: " + tag);
+        return -1;
+    }
     function filterCityList(){
         var intervention = self.toggleButtons[0].isActive();
         var non_intervention = self.toggleButtons[1].isActive();
@@ -113,6 +146,25 @@ async function loadSceneData()
     await processSceneData(text);
 }
 
+function layerClicked(name, active, tag){
+    console.log("Clicked element: " + name + " tag: " + tag + " now active: " + active);
+    //@Daniel: This gets called from all clicks on the layer menues
+    if(tag=="datagrp_design"){
+        var group =  g_displayGroups.get(tag);
+        group.show = active;
+
+      /*      if(group.show)
+            {
+                btn.classList.add("groupsTable_toggleBtn_active");
+                btn.classList.remove("groupsTable_toggleBtn_inactive");
+            }
+            else
+            {
+                btn.classList.add("groupsTable_toggleBtn_inactive");
+                btn.classList.remove("groupsTable_toggleBtn_active");
+            }  */
+    }
+}
 function processSceneData(data)
 {
     return new Promise(async (resolve, reject) => {
@@ -355,7 +407,7 @@ function loadKML(description)
         for(var e of dataSource.entities.values)
         {
        //     console.log("KML entity:");
-            console.log(e.name);
+        //    console.log(e.name);
 
             updateProgressDisplay(eIndex / dataSource.entities.values.length);
 
@@ -1362,8 +1414,9 @@ async function processCategoryData(description)
         console.log(description);
 
         g_categoryData = JSON.parse(description);
-
+ 
         // add data layer categories
+        var ko_infoLayers = [];
         for(var group of g_categoryData.datagroups)
         {
             // var tbl = document.getElementById('groupsTable');
@@ -1373,7 +1426,7 @@ async function processCategoryData(description)
             // grpCell.className = "groupsTable_grpCell";
             // grpCell.colSpan = 2;
             // grpCell.innerText = group.name;
-
+/*
             var container = document.getElementById('groupsContainer');
             var header = document.createElement('div');
 
@@ -1383,11 +1436,13 @@ async function processCategoryData(description)
             var tbl = document.createElement('table');
 
             container.appendChild(header);
-            container.appendChild(tbl);
-
+            container.appendChild(tbl); */
+  var tbl = document.createElement('table');
             // row = tbl.insertRow();
             g_infoLayerContainers.set(group.tags[0], tbl);
-    
+            var ko_infolayer = {"name" : group.name, "tags" : group.tags};
+            ko_viewModel.addInfoLayer(ko_infolayer);
+           // ko_infoLayers.push(ko_infolayer);
             // var cbCell = row.insertCell();
             // cbCell.className = "groupsTable_cbCell";
             
@@ -1400,8 +1455,8 @@ async function processCategoryData(description)
             // nameCell.className = "groupsTable_nameCell";
             // nameCell.innerHTML = group.name;
         }
-
-        // add spatial layers
+      //  ko_viewModel.setInfoLayers(ko_infoLayers);
+        // add spatial layers NH SPATIAL
         for(var layer of g_categoryData.spatial_layers)
         {
             // add a visibility flag to the layer for toggling later
@@ -1517,7 +1572,7 @@ async function processDataSources(description)
                     cbCell.appendChild(btn);
             
                     let layerName = src.name;
-            
+                    ko_viewModel.addChildToLayer(tag,layerName);
                     btn.onclick = function() {
                         // group.show = !group.show;
             
@@ -1638,7 +1693,7 @@ async function startup()
     // merge all timesteps together
     g_timeIntervals = new Cesium.TimeIntervalCollection();
     console.log('Combining time interval collections, count: ' + g_intervalGroups.size);
-
+/* NH UNCOMMENT
     for(var collection of g_intervalGroups.values())
     {
         console.log('Adding time interval collection, length: ' + collection.length);
@@ -1666,7 +1721,7 @@ async function startup()
         //     }
         // );
     }    
-
+*/
     viewer.clockViewModel.clock.currentTime = g_timeIntervals.get(0).start;
 
     // look at the default element, this should be selected as part of the loading process
@@ -1985,7 +2040,6 @@ function addDisplayGroup(name, group, groupName)
 
     // check if there is a container that matches the tag name
     var grpContainer = g_infoLayerContainers.get(name);
-
     if(grpContainer !== undefined)
     {
         var tbl = grpContainer;
@@ -2019,9 +2073,10 @@ function addDisplayGroup(name, group, groupName)
         var nameCell = row.insertCell();
         nameCell.className = "groupsTable_nameCell";
         nameCell.innerHTML = groupName;
-
+         ko_viewModel.addChildToLayer(name,groupName);
         nameCell.onclick = function()
         {
+            console.log("layer visi");
             group.show = !group.show;
 
             if(group.show)

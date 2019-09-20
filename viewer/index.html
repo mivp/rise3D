@@ -8,6 +8,7 @@
         <link rel="modulepreload" href="utm.js">
         <script type="module" src="utm.js"></script> -->
         <script src="entity.js"></script>
+   
         <script src="main.js"></script>
         <script src="../assets/housedata.js"></script>
 
@@ -27,8 +28,21 @@
                 <span class="containerHeader">info layers</span>
                 <br />
                 <br />
+     
                 <!-- groupsTable lists information layers and toggles data visibility -->
                 <div id="groupsContainer">
+                     <div id="ko_groupsContainer">
+                    <ul class="groupsTable_grpCell" data-bind="foreach: infoLayers">
+                        <li >
+                            <span data-bind= 'text: name'></span>
+                            <ul data-bind="foreach: children">
+                                <li type="disc" data-bind="click: $root.infoLayerClick.bind($data, $parent), css: {'listEntryActive':isActive}" class="groupsTable_nameCell" >
+                                    <span data-bind= 'text: name'></span>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
                 <!-- <table id="groupsTable"> -->
                     <!-- <tr>
                         <td class="groupsTable_cbCell">
@@ -53,7 +67,7 @@
                        
                             
                         </div>
-                           <div >
+                <div id="ko_sitlistContainer">
                     <ul class="siteList" data-bind= "foreach: siteList_cities">
                         <li class="siteList_cityname"  >
                             <span data-bind= 'text: name'></span>
@@ -106,21 +120,29 @@
                 <div class="infoTable_divider"></div>
                 <!-- sitesTable lists spatial elements and toggles their visibility -->
                 <span class="containerHeader">spatial layers</span>
-                <table id="layersTable">
-                    <!-- <tr>
+           <!--        <div id="ko_spatialLayersContainer">
+                    <ul class="groupsTable_grpCell" data-bind="foreach: spatialLayers">
+                        <li >
+                            <span data-bind= "text: name, click: $root.spatialLayerClick.bind($data, $parent), css: {'listEntryActive':isActive}"></span>
+                            
+                        </li>
+                    </ul>
+                </div>-->
+              <table id="layersTable">
+                     <tr>
                         <td class="groupsTable_cbCell">
                         </td>
                         <td class="groupsTable_nameCell_title">
                             
                         </td>
-                    </tr> -->
+                    </tr> 
                     <tr>
                         <td class="groupsTable_cbCell">
                         </td>
                         <td class="groupsTable_siteSelector_main">
                         </td>
                     </tr>
-                </table>                  
+                </table>               
             </div>
 
             <div id="cesiumContainer"></div>

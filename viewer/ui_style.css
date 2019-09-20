@@ -409,3 +409,7 @@ https://google.github.io/material-design-icons/
     border-color:white;
 }
 
+.listEntryActive
+{
+    background: yellow;
+}
