@@ -4,30 +4,120 @@
             "name" : "Design and Engagement",
             "tags" : [
                 "datagrp_design"
+            ],
+            "availability" : "available",
+            "children" : [
+                {
+                    "name" : "Feature survey",
+                    "tags" : [
+                        "datagrp_design_featuresurvey"
+                    ],
+                    "availability" : "available",
+                    "children" : []
+                },
+                {
+                    "name" : "Concept design",
+                    "tags" : [
+                        "datagrp_design_conceptdesign"
+                    ],
+                    "availability" : "available",
+                    "children" : []
+                },
+                {
+                    "name" : "Video transects",
+                    "tags" : [
+                        "datagrp_design_videotransects"
+                    ],
+                    "availability" : "locked",
+                    "children" : []
+                }
             ]
         },
         {
             "name" : "Ecology and Environment",
             "tags" : [
                 "datagrp_enviro"
+            ],
+            "availability" : "locked",
+            "children" : [
+                {
+                    "name" : "Mosquitos",
+                    "tags" : [
+                        "datagrp_enviro_mosquitos"
+                    ],
+                    "availability" : "locked",
+                    "children" : []
+                },
+                {
+                    "name" : "Rats",
+                    "tags" : [
+                        "datagrp_enviro_rats"
+                    ],
+                    "availability" : "locked",
+                    "children" : []
+                },
+                {
+                    "name" : "Acoustic Monitors",
+                    "tags" : [
+                        "datagrp_enviro_acoustic_monitors"
+                    ],
+                    "availability" : "locked",
+                    "children" : []
+                },
+                {
+                    "name" : "Temperature & Humidity",
+                    "tags" : [
+                        "datagrp_enviro_temp_humid"
+                    ],
+                    "availability" : "locked",
+                    "children" : []
+                },
+                {
+                    "name" : "E.coli",
+                    "tags" : [
+                        "datagrp_enviro_e_coli"
+                    ],
+                    "availability" : "locked",
+                    "children" : []
+                },
+                {
+                    "name" : "Rainfall",
+                    "tags" : [
+                        "datagrp_enviro_rainfall"
+                    ],
+                    "availability" : "locked",
+                    "children" : []
+                }
             ]
         },
         {
             "name" : "Health",
             "tags" : [
                 "datagrp_health"
+            ],
+            "availability" : "available",
+            "children" : [
+                
             ]
         },
         {
             "name" : "Wellbeing",
             "tags" : [
                 "datagrp_wellbeing"
+            ],
+            "availability" : "available",
+            "children" : [
+                
             ]
         },
         {
             "name" : "Policy",
             "tags" : [
                 "datagrp_policy"
+            ],
+            "availability" : "available",
+            "children" : [
+                
             ]
         }
     ],
