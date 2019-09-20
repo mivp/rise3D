@@ -1,6 +1,8 @@
 function viewModel() {
     var self = this;
- 
+    self.siteList_cities = ko.observableArray();
+    self.infoLayers = ko.observableArray();
+    self.spatialLayers = ko.observableArray();
     self.toggleButtons = [
         {name: "Intervention", isActive: ko.observable(true) },
         {name: "Non Intervention", isActive: ko.observable(true) }
@@ -14,13 +16,56 @@ function viewModel() {
    self.addCity =function(obj){
         self.siteList_cities.push( { name: obj.name, children: ko.observableArray(obj.children)});
     }
-    self.siteList_cities = ko.observableArray();
-    
+ 
     self.siteClick = function(evt){  //first parameter of click event is always the element that was clicked.
         console.log(evt);
         onSiteClick(evt);
     }
 
+    self.addInfoLayer = function(layer){
+        self.infoLayers.push( { name: layer.name, tags: layer.tags, children: ko.observableArray()})
+    }
+
+    self.addSpatialLayer = function(layer){
+        self.spatialLayers.push( { name: layer.name, tags: layer.tags, isActive: ko.observable(true), visibility: layer.visibility, children: ko.observableArray()})
+        if(layer.name =="Region meshes"){
+            self.spatialLayers()[self.spatialLayers().length-1].isActive(false);
+            spatialLayerClicked(layer.name,false);
+        }
+    }
+    self.infoLayerClick = function(parent,object){
+        object.isActive(!object.isActive());
+        layerClicked(object.name, object.isActive(), parent.tags[0]);
+   //     console.log(parent);
+    }
+
+      self.spatialLayerClick = function(object){
+        object.isActive(!object.isActive());
+        spatialLayerClicked(object.name, object.isActive());
+   //     console.log(parent);
+    }
+    self.addChildToLayer = function(tag,name){
+        var layerIndex = self.getInfoLayerIndex(tag);
+        if(layerIndex!=-1 && layerIndex != undefined){
+          //  self.infoLayers()[layerIndex].addChild(name);  //add to object
+            //also add to observable array
+            self.infoLayers()[layerIndex].children.push({"name" : name, "isActive": ko.observable(false)});
+        } else {
+            console.log("Layer not defined? " + tag + " - " + name);
+        }
+    }
+
+    self.getInfoLayerIndex = function(tag){
+       // console.log(self.infoLayers);
+        for(var i = 0; i < self.infoLayers().length; i ++){
+            if(self.infoLayers()[i].tags.indexOf(tag)>=0){
+                return i;
+                break;
+            }
+        }
+        console.log("Tag not found in InfoLayers: " + tag);
+        return -1;
+    }
     function filterCityList(){
         var intervention = self.toggleButtons[0].isActive();
         var non_intervention = self.toggleButtons[1].isActive();
@@ -113,6 +158,32 @@ async function loadSceneData()
     await processSceneData(text);
 }
 
+function spatialLayerClicked(name, isActive){
+    console.log("clicked spatial layer: " + name + "   is now active: " + isActive);
+         var layer = getSpatialLayer(name);
+         layer.visible = isActive;
+         setVisibilityByTags(layer.tags, layer.visible);
+}
+
+function layerClicked(name, active, tag){
+    console.log("Clicked element: " + name + " tag: " + tag + " now active: " + active);
+    //@Daniel: This gets called from all clicks on the layer menues
+    if(tag=="datagrp_design"){
+        var group =  g_displayGroups.get(tag);
+        group.show = active;
+
+      /*      if(group.show)
+            {
+                btn.classList.add("groupsTable_toggleBtn_active");
+                btn.classList.remove("groupsTable_toggleBtn_inactive");
+            }
+            else
+            {
+                btn.classList.add("groupsTable_toggleBtn_inactive");
+                btn.classList.remove("groupsTable_toggleBtn_active");
+            }  */
+    }
+}
 function processSceneData(data)
 {
     return new Promise(async (resolve, reject) => {
@@ -355,7 +426,7 @@ function loadKML(description)
         for(var e of dataSource.entities.values)
         {
        //     console.log("KML entity:");
-            console.log(e.name);
+        //    console.log(e.name);
 
             updateProgressDisplay(eIndex / dataSource.entities.values.length);
 
@@ -1362,8 +1433,9 @@ async function processCategoryData(description)
         console.log(description);
 
         g_categoryData = JSON.parse(description);
-
+ 
         // add data layer categories
+        var ko_infoLayers = [];
         for(var group of g_categoryData.datagroups)
         {
             // var tbl = document.getElementById('groupsTable');
@@ -1373,7 +1445,7 @@ async function processCategoryData(description)
             // grpCell.className = "groupsTable_grpCell";
             // grpCell.colSpan = 2;
             // grpCell.innerText = group.name;
-
+/*
             var container = document.getElementById('groupsContainer');
             var header = document.createElement('div');
 
@@ -1383,11 +1455,13 @@ async function processCategoryData(description)
             var tbl = document.createElement('table');
 
             container.appendChild(header);
-            container.appendChild(tbl);
-
+            container.appendChild(tbl); */
+  var tbl = document.createElement('table');
             // row = tbl.insertRow();
             g_infoLayerContainers.set(group.tags[0], tbl);
-    
+            var ko_infolayer = {"name" : group.name, "tags" : group.tags};
+            ko_viewModel.addInfoLayer(ko_infolayer);
+           // ko_infoLayers.push(ko_infolayer);
             // var cbCell = row.insertCell();
             // cbCell.className = "groupsTable_cbCell";
             
@@ -1400,27 +1474,31 @@ async function processCategoryData(description)
             // nameCell.className = "groupsTable_nameCell";
             // nameCell.innerHTML = group.name;
         }
-
-        // add spatial layers
+      //  ko_viewModel.setInfoLayers(ko_infoLayers);
+        // add spatial layers NH SPATIAL
         for(var layer of g_categoryData.spatial_layers)
         {
             // add a visibility flag to the layer for toggling later
             layer.visible = true;
 
             var tbl = document.getElementById('layersTable');
-            var row = tbl.insertRow();
+         /*   var row = tbl.insertRow();
 
             var cbCell = row.insertCell();
             cbCell.className = "groupsTable_cbCell";
             
-            let btn = document.createElement('button');
+           
             btn.textContent = "fiber_manual_record";
             btn.className = "groupsTable_toggleBtn_small groupsTable_toggleBtn_active material-icons";
             cbCell.appendChild(btn);
-
+              let btn = document.createElement('button');
+*/
             let layerName = layer.name;
+           
+            var ko_spatialLayer = {name: layer.name, tags: layer.tags, visibility: layer.visible };
+            ko_viewModel.addSpatialLayer(ko_spatialLayer);
+         /*   btn.onclick = function() {
 
-            btn.onclick = function() {
                 var layer = getSpatialLayer(layerName);
                 layer.visible = !layer.visible;
 
@@ -1436,9 +1514,9 @@ async function processCategoryData(description)
                     btn.classList.add("groupsTable_toggleBtn_inactive");
                     btn.classList.remove("groupsTable_toggleBtn_active");
                 }                
-            }
+            }*/
 
-            var nameCell = row.insertCell();
+         /*   var nameCell = row.insertCell();
             nameCell.className = "groupsTable_nameCell";
             nameCell.innerHTML = layer.name;
 
@@ -1459,7 +1537,7 @@ async function processCategoryData(description)
                     btn.classList.add("groupsTable_toggleBtn_inactive");
                     btn.classList.remove("groupsTable_toggleBtn_active");
                 }
-            }
+            }*/
         }
 
         resolve();
@@ -1517,7 +1595,7 @@ async function processDataSources(description)
                     cbCell.appendChild(btn);
             
                     let layerName = src.name;
-            
+                    ko_viewModel.addChildToLayer(tag,layerName);
                     btn.onclick = function() {
                         // group.show = !group.show;
             
@@ -1988,7 +2066,6 @@ function addDisplayGroup(name, group, groupName)
 
     // check if there is a container that matches the tag name
     var grpContainer = g_infoLayerContainers.get(name);
-
     if(grpContainer !== undefined)
     {
         var tbl = grpContainer;
@@ -2022,9 +2099,10 @@ function addDisplayGroup(name, group, groupName)
         var nameCell = row.insertCell();
         nameCell.className = "groupsTable_nameCell";
         nameCell.innerHTML = groupName;
-
+         ko_viewModel.addChildToLayer(name,groupName);
         nameCell.onclick = function()
         {
+            console.log("layer visi");
             group.show = !group.show;
 
             if(group.show)
