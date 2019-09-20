@@ -178,7 +178,7 @@ function layerClicked(name, active, tag){
     console.log("Clicked element: " + name + " tag: " + tag + " now active: " + active);
     //@Daniel: This gets called from all clicks on the layer menues
     if(tag=="datagrp_design"){
-        var group =  g_displayGroups.get(tag);
+        var group =  g_displayGroups.get(name);
         group.show = active;
 
       /*      if(group.show)
@@ -192,7 +192,8 @@ function layerClicked(name, active, tag){
                 btn.classList.remove("groupsTable_toggleBtn_active");
             }  */
     }
-    else if(name == "Tenure")
+    // TODO: associate this with a tag or something other than a name, which might change for aesthetic but not functionality purposes!
+    else if(name == "Land tenure")
     {
         for(var src of g_dataCatalog.dataSources)
         {
@@ -557,6 +558,12 @@ function loadMesh(description)
         // early grouping work, just create an entity group for each entity
         // var grp = new Cesium.EntityCollection();
         var model = null;
+        var showDefault = true;
+
+        if('showDefault' in description)
+        {
+            showDefault = description.showDefault;
+        }
 
         if('matrix' in description)
         {
@@ -568,7 +575,7 @@ function loadMesh(description)
                 uri: description.path,
                 modelMatrix: matrix,
                 allowPicking: true,
-                show: true
+                show: showDefault
             });
 
             var primitive = viewer.scene.primitives.add(model);
@@ -579,7 +586,7 @@ function loadMesh(description)
             model = Cesium.Model.fromGltf({
                     url: description.path,
                 // scale: 0.05,
-                show: true,
+                show: showDefault,
                 modelMatrix: modelMatrix,
                 allowPicking: true
             });
@@ -602,7 +609,7 @@ function loadMesh(description)
                 model = Cesium.Model.fromGltf({
                     url: description.path,
                 // scale: 0.05,
-                show: true,
+                show: showDefault,
                 allowPicking: true
             });
 
@@ -715,8 +722,8 @@ async function processHygrodataSummary(description, filenames, datapath, sourceE
                 outlineColor: Cesium.Color.BLACK,
                 verticalOrigin : Cesium.VerticalOrigin.BOTTOM,
                 pixelOffset : new Cesium.Cartesian2(0, -9),
-                distanceDisplayCondition : new Cesium.DistanceDisplayCondition(0.0, 8000.0),
-                translucencyByDistance : new Cesium.NearFarScalar(1000.0, 1.0, 8000.0, 0.0),
+                distanceDisplayCondition : new Cesium.DistanceDisplayCondition(0.0, 2000.0),
+                translucencyByDistance : new Cesium.NearFarScalar(500.0, 1.0, 2000.0, 0.0),
                 scale: 0.5
             },
             id : pointID
@@ -2075,7 +2082,14 @@ function addDisplayGroup(name, group, groupName)
 {
     var addToggle = false;
 
-    g_displayGroups.set(name, group);
+    if(groupName)
+    {
+        g_displayGroups.set(groupName, group);
+    }
+    else
+    {
+        g_displayGroups.set(name, group);
+    }
 
     var layer = g_displayLayers.get(name);
 

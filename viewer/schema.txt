@@ -49,6 +49,7 @@ EXAMPLE:
             "datatype" : "mesh",
             "path" : "/Assets/meshes/test_mesh.glb",                            // must be in gltf/glb format
             "name" : "testmesh",
+            "showDefault" : "true",                                             // visible by default - false to hide on load
             "position" : {
                 "x" : 800000.0,                                                 // currently in UTM50S, but will be flexible later
                 "y" : 9500000.0
