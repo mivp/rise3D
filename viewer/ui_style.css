@@ -67,6 +67,11 @@ body
     opacity: 0.8;
 }
 
+.weatherReadout_disabled
+{
+    display: none;
+}
+
 #weather_readout_title
 {
     font-family: Verdana, Geneva, Tahoma, sans-serif;
@@ -225,6 +230,11 @@ body
     padding-inline-start: 0px;
 }
 
+.siteList:hover
+{
+    cursor: default;
+}
+
 .siteList_cityname
 {
     font-weight: 800;
@@ -239,6 +249,7 @@ body
 .siteList_sitename:hover
 {
     font-weight: bold;
+    cursor: pointer;
 }
 
 /* data layers selector */

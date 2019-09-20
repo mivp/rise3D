@@ -183,6 +183,16 @@ function layerClicked(name, active, tag){
                 btn.classList.remove("groupsTable_toggleBtn_active");
             }  */
     }
+    else if(name == "Tenure")
+    {
+        for(var src of g_dataCatalog.dataSources)
+        {
+            if(src.name == name)
+            {
+                applyDataSourceToBuildings(src.fieldname, active);
+            }
+        }        
+    }
 }
 function processSceneData(data)
 {
@@ -2501,92 +2511,116 @@ function setVisibilityByTags(tags, visibility)
 
 // produces a visualisation of a data source to the building shapes - ONLY FOR PROTOTYPE
 // this feature needs a more general-purpose solution, so this function is only for demonstration for now
-function applyDataSourceToBuildings(source)
+// if show is false, hide the visualisation
+function applyDataSourceToBuildings(source, show)
 {
     if(source == 'tenure1')
     {
-        var buildings = DataEntity.getEntitiesByType(EntityType.Building);
-
-        var testColours = [
-            [1.0, 0.2, 0.2],
-            [0.2, 0.8, 0.2],
-            [0.25, 0.2, 0.8],
-            [0.8, 0.8, 0.2],
-            [0.2, 0.9, 1.2],
-            [1.0, 0.2, 1.0],
-            [0.8, 0.8, 0.8],
-        ];
-
-        for(var b of buildings)
+        if(!show)
         {
-            var feature = b.data.obj;
+            var legend = document.getElementById("weatherReadout");
             
-            if(feature.polygon)
+            legend.innerHTML = "";
+            legend.classList.add("weatherReadout_disabled");
+
+            var buildings = DataEntity.getEntitiesByType(EntityType.Building);
+
+            for(var b of buildings)
             {
-                var colourIndex = parseInt(b.data.surveyData.tenure1);
+                var feature = b.data.obj;
+                
+                if(feature.polygon)
+                {
+                    feature.polygon.material.color.setValue(Cesium.Color.fromBytes(255, 0, 0, a));
+                }
+            }
+        }
+        else
+        {
+            var buildings = DataEntity.getEntitiesByType(EntityType.Building);
+
+            var testColours = [
+                [1.0, 0.2, 0.2],
+                [0.2, 0.8, 0.2],
+                [0.25, 0.2, 0.8],
+                [0.8, 0.8, 0.2],
+                [0.2, 0.9, 1.2],
+                [1.0, 0.2, 1.0],
+                [0.8, 0.8, 0.8],
+            ];
+
+            for(var b of buildings)
+            {
+                var feature = b.data.obj;
+                
+                if(feature.polygon)
+                {
+                    var colourIndex = parseInt(b.data.surveyData.tenure1);
+
+                    if(isNaN(colourIndex) || (colourIndex < 0 || colourIndex >= testColours.length))
+                    {
+                        colourIndex = 0;
+                    }
+
+                    var r = Cesium.Color.floatToByte(testColours[colourIndex][0]);
+                    var g = Cesium.Color.floatToByte(testColours[colourIndex][1]);
+                    var b = Cesium.Color.floatToByte(testColours[colourIndex][2]);
+                    var a = 255;
+
+                    feature.polygon.material.color.setValue(Cesium.Color.fromBytes(r, g, b, a));
+                }            
+            }
+
+            var legend = document.getElementById("weatherReadout");
+            
+            legend.innerHTML = "";
+            legend.classList.remove("weatherReadout_disabled");
+
+            var hdr = document.createElement('span');
+            hdr.innerHTML = "Legend - Land tenure<br/>";
+            hdr.classList.add("legend_header");
+
+            legend.appendChild(hdr);
+
+            var tbl = document.createElement('table');
+            var row = tbl.insertRow();
+
+            row.insertCell(); row.insertCell();
+
+            [   "Don't know",
+                "Refused to answer",
+                "Other",
+                "Question was not asked",
+                "Freehold Ownership Title",
+                "Sale & Purchase Deed",
+                "Temporary Registration Letter",
+                "Right to Work Land",
+                "Proof of Payment/Installment",
+                "Relocation Letter"
+            ].map((srcName, index) => {
+                row = tbl.insertRow();
+                var hdrCell = row.insertCell();
+                hdrCell.classList.add('overlay_entity_fieldname');
+                hdrCell.innerHTML = `${srcName}:`;
+
+                var colNames = [-99, -88, -77, -66, 1, 2, 3, 4, 5, 6];
+
+                var colourIndex = colNames[index];
 
                 if(isNaN(colourIndex) || (colourIndex < 0 || colourIndex >= testColours.length))
                 {
                     colourIndex = 0;
                 }
 
-                var r = Cesium.Color.floatToByte(testColours[colourIndex][0]);
-                var g = Cesium.Color.floatToByte(testColours[colourIndex][1]);
-                var b = Cesium.Color.floatToByte(testColours[colourIndex][2]);
-                var a = 255;
+                var valCell = row.insertCell();
+                valCell.classList.add('overlay_entity_value');
+                valCell.innerHTML = colNames[index];
+                valCell.style.color = `rgb(${testColours[colourIndex][0] * 255.0}, ${testColours[colourIndex][1] * 255.0}, ${testColours[colourIndex][2] * 255.0})`;
+            });
 
-                feature.polygon.material.color.setValue(Cesium.Color.fromBytes(r, g, b, a));
-            }            
+            legend.appendChild(hdr);
+            legend.appendChild(tbl);
         }
-
-        var legend = document.getElementById("weatherReadout");
-        
-        legend.innerHTML = "";
-        
-        var hdr = document.createElement('span');
-        hdr.innerHTML = "Legend - Land tenure<br/>";
-        hdr.classList.add("legend_header");
-
-        legend.appendChild(hdr);
-
-        var tbl = document.createElement('table');
-        var row = tbl.insertRow();
-
-        row.insertCell(); row.insertCell();
-
-        [   "Don't know",
-            "Refused to answer",
-            "Other",
-            "Question was not asked",
-            "Freehold Ownership Title",
-            "Sale & Purchase Deed",
-            "Temporary Registration Letter",
-            "Right to Work Land",
-            "Proof of Payment/Installment",
-            "Relocation Letter"
-        ].map((srcName, index) => {
-            row = tbl.insertRow();
-            var hdrCell = row.insertCell();
-            hdrCell.classList.add('overlay_entity_fieldname');
-            hdrCell.innerHTML = `${srcName}:`;
-
-            var colNames = [-99, -88, -77, -66, 1, 2, 3, 4, 5, 6];
-
-            var colourIndex = colNames[index];
-
-            if(isNaN(colourIndex) || (colourIndex < 0 || colourIndex >= testColours.length))
-            {
-                colourIndex = 0;
-            }
-
-            var valCell = row.insertCell();
-            valCell.classList.add('overlay_entity_value');
-            valCell.innerHTML = colNames[index];
-            valCell.style.color = `rgb(${testColours[colourIndex][0] * 255.0}, ${testColours[colourIndex][1] * 255.0}, ${testColours[colourIndex][2] * 255.0})`;
-        });
-
-        legend.appendChild(hdr);
-        legend.appendChild(tbl);
     }
 }
 
