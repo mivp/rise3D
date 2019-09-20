@@ -459,3 +459,17 @@ li {
 .groupsTable_grpCell + .groupsTable_nameCell {
   border-top: 1px solid rgba(255,255,255,0.2);
 }
+
+.canHaveLock {
+    display:flex;
+}
+
+.readable {
+    line-height:25px;
+    font-family: 'Questrial', sans-serif;
+    font-size: 12pt;
+}
+
+.notClickable {
+    pointer-events: none;
+}

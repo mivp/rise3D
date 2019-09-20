@@ -46,7 +46,7 @@ function viewModel() {
         spatialLayerClicked(object.name, object.isActive());
    //     console.log(parent);
     }
-    self.addChildToLayer = function(tag,name){
+    self.addChildToLayer = function(tag,name, locked){
         var layerIndex = self.getInfoLayerIndex(tag);
         if(layerIndex!=-1 && layerIndex != undefined){
           //  self.infoLayers()[layerIndex].addChild(name);  //add to object
@@ -55,7 +55,8 @@ function viewModel() {
             if(tag=="datagrp_design"){
                 displayAtstartup = true;
             }
-            self.infoLayers()[layerIndex].children.push({"name" : name, "isActive": ko.observable(displayAtstartup)});
+
+            self.infoLayers()[layerIndex].children.push({"name" : name, "isActive": ko.observable(displayAtstartup), "isLocked": ko.observable(locked)});
         } else {
             console.log("Layer not defined? " + tag + " - " + name);
         }
@@ -1599,8 +1600,10 @@ async function processDataSources(description)
                     cbCell.className = "groupsTable_cbCell";
                     
                     let btn = document.createElement('button');
+                    var locked = false;
                     if(src.availability == "locked")
                     {
+                        locked=true;
                         btn.textContent = "lock";
                     }
                     else
@@ -1611,7 +1614,7 @@ async function processDataSources(description)
                     cbCell.appendChild(btn);
             
                     let layerName = src.name;
-                    ko_viewModel.addChildToLayer(tag,layerName);
+                    ko_viewModel.addChildToLayer(tag,layerName,locked);
                     btn.onclick = function() {
                         // group.show = !group.show;
             
@@ -1735,7 +1738,7 @@ async function startup()
     // merge all timesteps together
     g_timeIntervals = new Cesium.TimeIntervalCollection();
     console.log('Combining time interval collections, count: ' + g_intervalGroups.size);
-
+/* NH UNCOMMENT
     for(var collection of g_intervalGroups.values())
     {
         console.log('Adding time interval collection, length: ' + collection.length);
@@ -1763,7 +1766,7 @@ async function startup()
         //     }
         // );
     }    
-
+*/
     viewer.clockViewModel.clock.currentTime = g_timeIntervals.get(0).start;
 
     // look at the default element, this should be selected as part of the loading process

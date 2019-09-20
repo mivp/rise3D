@@ -38,8 +38,8 @@
                         <li class="infoLayers_maincategory" >
                             <span data-bind='text: name'></span>
                             <ul data-bind="foreach: children">
-                                <li  data-bind="click: $root.infoLayerClick.bind($data,$parent), css: {'listEntryActive':isActive}" class="groupsTable_nameCell">
-                                    <span data-bind='text: name'></span>
+                                <li  data-bind="click: $root.infoLayerClick.bind($data,$parent), css: {'listEntryActive':isActive, 'notClickable': isLocked}" class="groupsTable_nameCell canHaveLock">
+                                    <span data-bind="css:{'material-icons':isLocked}, visible: isLocked" > lock </span><span class="readable" data-bind='text: name'></span>
                                 </li>
                             </ul>
                         </li>
