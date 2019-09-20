@@ -123,6 +123,8 @@ var g_infoLayerContainers = new Map();  // a map of HTML elements (probably all 
 var g_siteDescriptors = new Map();
 var g_dataCatalog = null;
 
+var g_dataStructure = {}; // experimental - this will hold all data categories and groups in one object
+
 // loader
 var _g_loaderTotalSteps = 0;
 var _g_loaderCurrentStep = 0;
@@ -1450,6 +1452,7 @@ async function processCategoryData(description)
         console.log(description);
 
         g_categoryData = JSON.parse(description);
+        g_dataStructure = Object.assign(g_dataStructure, g_categoryData);
  
         // add data layer categories
         var ko_infoLayers = [];
@@ -1576,7 +1579,8 @@ async function processDataSources(description)
 
         var dataFile = JSON.parse(description);
         g_dataCatalog = dataFile;   // remember the data catalog for now, this should probably be put in a central location
-
+        g_dataStructure = Object.assign(g_dataStructure, dataFile);
+ 
         // TODO: invoke loader functions for each data object; this should probably be similar to how scene_data.json is loaded
         for(var src of dataFile.dataSources)
         {
@@ -1629,7 +1633,7 @@ async function processDataSources(description)
                         //     btn.classList.remove("groupsTable_toggleBtn_active");
                         // }
                     }
-            
+
                     var nameCell = row.insertCell();
                     nameCell.className = "groupsTable_nameCell";
                     nameCell.innerHTML = layerName;
@@ -1732,6 +1736,9 @@ async function startup()
 
     // load external data sources
     await loadDataSources();
+
+    console.log("Loaded data sources, structure is now: ");
+    console.log(g_dataStructure);
 
     document.getElementById('loaderProgressDisplay').style.display = 'none';
     
