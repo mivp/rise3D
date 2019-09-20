@@ -131,8 +131,13 @@ body
     text-align: left;
     user-select: none;
     font-weight: 700;
+    
 }
+.infoLayers_maincategory
+{
 
+    border-top: 1.5px solid rgba(255,255,255,0.2);
+}
 .groupsTable_cbCell
 {
     width: 50px;
@@ -141,14 +146,20 @@ body
     text-align: left;
     user-select: none;
 }
-
+li {
+    list-style-type:none
+}
 .groupsTable_nameCell
 {
     width: 300px;
     height: 25px;
+    padding-left: 20px;
     color: #d0d0d0;
     font-family: 'Questrial', sans-serif;
     user-select: none;
+    text-align: left;
+    line-height: 25px;
+    border-top: 1px  solid rgba(255,255,255,0.2);
 }
 
 .groupsTable_nameCell_title
@@ -411,5 +422,22 @@ https://google.github.io/material-design-icons/
 
 .listEntryActive
 {
-    background: yellow;
+    background: #bddbbe;
+    color: darkgreen ;
+    border: 2px solid darkgreen;
+    border-radius: 5px;
+}
+
+ul {
+  padding: 0;
+  max-width: 300px;
+}
+
+/* List element */
+li {
+  align-items: left;
+  box-sizing: border-box;
+}
+.groupsTable_grpCell + .groupsTable_nameCell {
+  border-top: 1px solid rgba(255,255,255,0.2);
 }
