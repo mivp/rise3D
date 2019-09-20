@@ -443,8 +443,7 @@ https://google.github.io/material-design-icons/
 {
     background: #bddbbe;
     color: darkgreen ;
-    border: 2px solid darkgreen;
-    border-radius: 5px;
+    border: 1.5px dotted darkgreen;
 }
 
 ul {

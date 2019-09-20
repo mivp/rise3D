@@ -23,7 +23,7 @@ function viewModel() {
     }
 
     self.addInfoLayer = function(layer){
-        self.infoLayers.push( { name: layer.name, tags: layer.tags, children: ko.observableArray()})
+        self.infoLayers.push( { name: layer.name, tags: layer.tags, children: ko.observableArray() });
     }
 
     self.addSpatialLayer = function(layer){
@@ -33,9 +33,10 @@ function viewModel() {
             spatialLayerClicked(layer.name,false);
         }
     }
-    self.infoLayerClick = function(parent,object){
-        object.isActive(!object.isActive());
-        layerClicked(object.name, object.isActive(), parent.tags[0]);
+    self.infoLayerClick = function(parent,data){
+     //   console.log("infoLayerclick  " + data.name); 
+        data.isActive(!data.isActive());
+        layerClicked(data.name, data.isActive(), parent.tags[0]);
    //     console.log(parent);
     }
 

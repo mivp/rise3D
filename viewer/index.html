@@ -35,10 +35,10 @@
             <div id="groupsContainer">
                 <div id="ko_groupsContainer">
                     <ul class="groupsTable_grpCell" data-bind="foreach: infoLayers">
-                        <li class="infoLayers_maincategory">
+                        <li class="infoLayers_maincategory" >
                             <span data-bind='text: name'></span>
                             <ul data-bind="foreach: children">
-                                <li type="disc" data-bind="click: $root.infoLayerClick.bind($data, $parent), css: {'listEntryActive':isActive}" class="groupsTable_nameCell">
+                                <li  data-bind="click: $root.infoLayerClick.bind($data,$parent), css: {'listEntryActive':isActive}" class="groupsTable_nameCell">
                                     <span data-bind='text: name'></span>
                                 </li>
                             </ul>
