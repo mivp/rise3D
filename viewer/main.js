@@ -1745,7 +1745,7 @@ async function startup()
     // merge all timesteps together
     g_timeIntervals = new Cesium.TimeIntervalCollection();
     console.log('Combining time interval collections, count: ' + g_intervalGroups.size);
- NH UNCOMMENT
+
     for(var collection of g_intervalGroups.values())
     {
         console.log('Adding time interval collection, length: ' + collection.length);
