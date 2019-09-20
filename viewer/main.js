@@ -41,6 +41,7 @@ function viewModel() {
     }
 
       self.spatialLayerClick = function(object){
+        console.log("clicked: " + object.name)
         object.isActive(!object.isActive());
         spatialLayerClicked(object.name, object.isActive());
    //     console.log(parent);
@@ -50,7 +51,11 @@ function viewModel() {
         if(layerIndex!=-1 && layerIndex != undefined){
           //  self.infoLayers()[layerIndex].addChild(name);  //add to object
             //also add to observable array
-            self.infoLayers()[layerIndex].children.push({"name" : name, "isActive": ko.observable(false)});
+            var displayAtstartup = false;
+            if(tag=="datagrp_design"){
+                displayAtstartup = true;
+            }
+            self.infoLayers()[layerIndex].children.push({"name" : name, "isActive": ko.observable(displayAtstartup)});
         } else {
             console.log("Layer not defined? " + tag + " - " + name);
         }
