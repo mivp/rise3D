@@ -1745,7 +1745,7 @@ async function startup()
     // merge all timesteps together
     g_timeIntervals = new Cesium.TimeIntervalCollection();
     console.log('Combining time interval collections, count: ' + g_intervalGroups.size);
-/* NH UNCOMMENT
+ NH UNCOMMENT
     for(var collection of g_intervalGroups.values())
     {
         console.log('Adding time interval collection, length: ' + collection.length);
@@ -1773,7 +1773,7 @@ async function startup()
         //     }
         // );
     }    
-*/
+
     viewer.clockViewModel.clock.currentTime = g_timeIntervals.get(0).start;
 
     // look at the default element, this should be selected as part of the loading process
