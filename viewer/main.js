@@ -1,8 +1,8 @@
 function viewModel() {
     var self = this;
     self.siteList_cities = ko.observableArray();
-    self.infoLayers = ko.observableArray([]);
- 
+    self.infoLayers = ko.observableArray();
+    self.spatialLayers = ko.observableArray();
     self.toggleButtons = [
         {name: "Intervention", isActive: ko.observable(true) },
         {name: "Non Intervention", isActive: ko.observable(true) }
@@ -24,12 +24,24 @@ function viewModel() {
 
     self.addInfoLayer = function(layer){
         self.infoLayers.push( { name: layer.name, tags: layer.tags, children: ko.observableArray()})
-
     }
 
+    self.addSpatialLayer = function(layer){
+        self.spatialLayers.push( { name: layer.name, tags: layer.tags, isActive: ko.observable(true), visibility: layer.visibility, children: ko.observableArray()})
+        if(layer.name =="Region meshes"){
+            self.spatialLayers()[self.spatialLayers().length-1].isActive(false);
+            spatialLayerClicked(layer.name,false);
+        }
+    }
     self.infoLayerClick = function(parent,object){
         object.isActive(!object.isActive());
         layerClicked(object.name, object.isActive(), parent.tags[0]);
+   //     console.log(parent);
+    }
+
+      self.spatialLayerClick = function(object){
+        object.isActive(!object.isActive());
+        spatialLayerClicked(object.name, object.isActive());
    //     console.log(parent);
     }
     self.addChildToLayer = function(tag,name){
@@ -144,6 +156,13 @@ async function loadSceneData()
     var text = await response.text();
 
     await processSceneData(text);
+}
+
+function spatialLayerClicked(name, isActive){
+    console.log("clicked spatial layer: " + name + "   is now active: " + isActive);
+         var layer = getSpatialLayer(name);
+         layer.visible = isActive;
+         setVisibilityByTags(layer.tags, layer.visible);
 }
 
 function layerClicked(name, active, tag){
@@ -1463,19 +1482,23 @@ async function processCategoryData(description)
             layer.visible = true;
 
             var tbl = document.getElementById('layersTable');
-            var row = tbl.insertRow();
+         /*   var row = tbl.insertRow();
 
             var cbCell = row.insertCell();
             cbCell.className = "groupsTable_cbCell";
             
-            let btn = document.createElement('button');
+           
             btn.textContent = "fiber_manual_record";
             btn.className = "groupsTable_toggleBtn_small groupsTable_toggleBtn_active material-icons";
             cbCell.appendChild(btn);
-
+              let btn = document.createElement('button');
+*/
             let layerName = layer.name;
+           
+            var ko_spatialLayer = {name: layer.name, tags: layer.tags, visibility: layer.visible };
+            ko_viewModel.addSpatialLayer(ko_spatialLayer);
+         /*   btn.onclick = function() {
 
-            btn.onclick = function() {
                 var layer = getSpatialLayer(layerName);
                 layer.visible = !layer.visible;
 
@@ -1491,9 +1514,9 @@ async function processCategoryData(description)
                     btn.classList.add("groupsTable_toggleBtn_inactive");
                     btn.classList.remove("groupsTable_toggleBtn_active");
                 }                
-            }
+            }*/
 
-            var nameCell = row.insertCell();
+         /*   var nameCell = row.insertCell();
             nameCell.className = "groupsTable_nameCell";
             nameCell.innerHTML = layer.name;
 
@@ -1514,7 +1537,7 @@ async function processCategoryData(description)
                     btn.classList.add("groupsTable_toggleBtn_inactive");
                     btn.classList.remove("groupsTable_toggleBtn_active");
                 }
-            }
+            }*/
         }
 
         resolve();
@@ -1693,7 +1716,7 @@ async function startup()
     // merge all timesteps together
     g_timeIntervals = new Cesium.TimeIntervalCollection();
     console.log('Combining time interval collections, count: ' + g_intervalGroups.size);
-/* NH UNCOMMENT
+
     for(var collection of g_intervalGroups.values())
     {
         console.log('Adding time interval collection, length: ' + collection.length);
@@ -1721,7 +1744,7 @@ async function startup()
         //     }
         // );
     }    
-*/
+
     viewer.clockViewModel.clock.currentTime = g_timeIntervals.get(0).start;
 
     // look at the default element, this should be selected as part of the loading process
