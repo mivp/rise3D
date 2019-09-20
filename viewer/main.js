@@ -270,6 +270,8 @@ function processSceneData(data)
     });
 }
 
+// load point cloud object
+// TODO: rename this
 function loadElement(description)
 {
     return new Promise((resolve, reject) => {
@@ -318,7 +320,10 @@ function loadElement(description)
                     outlineColor: Cesium.Color.BLACK,
                     verticalOrigin : Cesium.VerticalOrigin.BOTTOM,
                     pixelOffset : new Cesium.Cartesian2(0, -9),
-                    scale: 0.5
+                    scale: 0.5,
+                    distanceDisplayCondition : new Cesium.DistanceDisplayCondition(300.0, 7000.0),
+                    translucencyByDistance : new Cesium.NearFarScalar(300.0, 1.0, 7000.0, 0.0),
+    
                 }
             });
 
