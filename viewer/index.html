@@ -1,209 +1,113 @@
 <html lang="en">
-    <meta charset="utf-8">
-    <head>
-        <!-- <script src="https://cesiumjs.org/releases/1.52/Build/Cesium/Cesium.js"></script> -->
-        <script src="https://cesiumjs.org/releases/1.60/Build/Cesium/Cesium.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.0/knockout-min.js"></script>
-        <!-- <script data-main="main.js" src="require.js"></script>        
+<meta charset="utf-8">
+
+<head>
+    <!-- <script src="https://cesiumjs.org/releases/1.52/Build/Cesium/Cesium.js"></script> -->
+    <script src="https://cesiumjs.org/releases/1.60/Build/Cesium/Cesium.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.0/knockout-min.js"></script>
+    <!-- <script data-main="main.js" src="require.js"></script>        
         <link rel="modulepreload" href="utm.js">
         <script type="module" src="utm.js"></script> -->
-        <script src="entity.js"></script>
-   
-        <script src="main.js"></script>
-        <script src="../assets/housedata.js"></script>
+    <script src="entity.js"></script>
 
-        <!-- external, locally-hosted (for now) libraries -->
-        <script src="libs/papaparse.min.js"></script>
-        <script src="utm.js"></script>
+    <script src="main.js"></script>
+    <script src="../assets/housedata.js"></script>
 
-        <!-- <link href="https://cesiumjs.org/releases/1.52/Build/Cesium/Widgets/widgets.css" rel="stylesheet"> -->
-        <link href="https://cesiumjs.org/releases/1.60/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css?family=Questrial" rel="stylesheet">        
-        <link href="ui_style.css" rel="stylesheet">
-    </head>
-    <body onload="startup()">
-        <!-- <div id="cesiumContainer" style="width: 1920px; height: 1080px"></div> -->
-        <div id="mainContainer">
-            <div id="infoLayersContainer">
-                <span class="containerHeader">info layers</span>
-                <br />
-                <br />
-     
-                <!-- groupsTable lists information layers and toggles data visibility -->
-                <div id="groupsContainer">
-                     <div id="ko_groupsContainer">
+    <!-- external, locally-hosted (for now) libraries -->
+    <script src="libs/papaparse.min.js"></script>
+    <script src="utm.js"></script>
+
+    <!-- <link href="https://cesiumjs.org/releases/1.52/Build/Cesium/Widgets/widgets.css" rel="stylesheet"> -->
+    <link href="https://cesiumjs.org/releases/1.60/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Questrial" rel="stylesheet">
+    <link href="ui_style.css" rel="stylesheet">
+</head>
+
+<body onload="startup()">
+    <!-- <div id="cesiumContainer" style="width: 1920px; height: 1080px"></div> -->
+    <div id="mainContainer">
+        <div id="infoLayersContainer">
+            <span class="containerHeader">info layers</span>
+            <br />
+            <br />
+
+            <!-- groupsTable lists information layers and toggles data visibility -->
+            <div id="groupsContainer">
+                <div id="ko_groupsContainer">
                     <ul class="groupsTable_grpCell" data-bind="foreach: infoLayers">
-                        <li >
-                            <span data-bind= 'text: name'></span>
+                        <li class="infoLayers_maincategory" >
+                            <span data-bind='text: name'></span>
                             <ul data-bind="foreach: children">
-                                <li type="disc" data-bind="click: $root.infoLayerClick.bind($data, $parent), css: {'listEntryActive':isActive}" class="groupsTable_nameCell" >
-                                    <span data-bind= 'text: name'></span>
+                                <li  data-bind="click: $root.infoLayerClick.bind($data,$parent), css: {'listEntryActive':isActive}" class="groupsTable_nameCell">
+                                    <span data-bind='text: name'></span>
                                 </li>
                             </ul>
                         </li>
                     </ul>
                 </div>
-                <!-- <table id="groupsTable"> -->
-                    <!-- <tr>
-                        <td class="groupsTable_cbCell">
-                            show
-                        </td>
-                        <td class="groupsTable_nameCell_title">
-                            data layer
-                        </td>
-                    </tr> -->
-                <!-- </table> -->
-                </div>
-                <br />
-                <div class="infoTable_divider"></div>
-                <!-- sitesTable lists project sites and provides quick jump-to-location -->
-                <div id='sitesTable'>
-                <span class="containerHeader">site browser</span>
-              <!--  <table id="sitesTable">
-                    <tr> -->
-                        <div class="interventionSelector" data-bind="foreach: toggleButtons">
-                            <!-- 2 buttons which are togglable -->
-                            <div  class="toggleButton" data-bind="click: $parent.toggleActive, css: {'buttonActive': isActive}"><span  data-bind='text: name'></span> </div>
-                       
-                            
-                        </div>
-                <div id="ko_sitlistContainer">
-                    <ul class="siteList" data-bind= "foreach: siteList_cities">
-                        <li class="siteList_cityname"  >
-                            <span data-bind= 'text: name'></span>
-                            <ul data-bind="foreach: children">
-                                <li type="disc" data-bind='click: $root.siteClick' class="siteList_sitename" >
-                                    <span data-bind= 'text:name'></span>
-                                </li>
-                            </ul>
-                        </li>
 
-                    </ul>
-                </div>
-
-                  <!--      <table  data-bind="foreach: sites">
-                            <td class="sitesSelector" cols[an="2">
-                                <ul class="siteList"></ul>
-                            </td>
-
-                        </div>
-                  <!--      <td class="groupsTable_cbCell">
-                            <button class="groupsTable_toggleBtn_small groupsTable_toggleBtn_active material-icons">fiber_manual_record</button>
-                        </td> -
-                        <td class="groupsTable_nameCell_title">
-                            intervention sites
-                        </td> 
-                    </tr>-->
-                  <table>
-                    <tr>
-                        <td id="sitesSelector" colspan="2" >
-                          
-
-                        </td>
-                        <!-- <td class="groupsTable_cbCell">
-                        </td> -->
-                        <!-- <td class="groupsTable_siteSelector_main" id="sitesSelector">
-                            <select id="sitesSelector">
-    
-                            </select>
-                        </td>
-                        <td class="groupsTable_siteSelector_icon">
-                            <i class="material-icons">
-                                    keyboard_arrow_down
-                            </i>
-                        </td> -->
-                    </tr> 
-                </table>
-             
-                <br />
-                </div>
-                <div class="infoTable_divider"></div>
-                <!-- sitesTable lists spatial elements and toggles their visibility -->
-                <span class="containerHeader">spatial layers</span>
-                <div id="ko_spatialLayersContainer">
-                    <ul class="groupsTable_grpCell" data-bind="foreach: spatialLayers">
-                        <li >
-                            <span data-bind= "text: name, click: $root.spatialLayerClick.bind($data), css: {'listEntryActive':isActive}"></span>
-                            
-                        </li>
-                    </ul>
-                </div>
-              <table id="layersTable">
-                     <tr>
-                        <td class="groupsTable_cbCell">
-                        </td>
-                        <td class="groupsTable_nameCell_title">
-                            
-                        </td>
-                    </tr> 
-                    <tr>
-                        <td class="groupsTable_cbCell">
-                        </td>
-                        <td class="groupsTable_siteSelector_main">
-                        </td>
-                    </tr>
-                </table>               
             </div>
+            <br />
+            <div class="infoTable_divider"></div>
+            <!-- sitesTable lists project sites and provides quick jump-to-location -->
+            <div id='sitesTable'>
+                <span class="containerHeader">site browser</span>
+                <!--  <table id="sitesTable">
+                    <tr> -->
+                <div class="interventionSelector" data-bind="foreach: toggleButtons">
+                    <!-- 2 buttons which are togglable -->
+                    <div class="toggleButton" data-bind="click: $parent.toggleActive, css: {'buttonActive': isActive}"><span data-bind='text: name'></span> </div>
 
-            <div id="cesiumContainer"></div>
+                </div>
+                <div id="ko_sitlistContainer">
+                    <ul class="siteList" data-bind="foreach: siteList_cities">
+                        <li class="infoLayers_maincategory">
+                            <span data-bind='text: name'></span>
+                            <ul data-bind="foreach: children">
+                                <li type="disc" data-bind='click: $root.siteClick'  class="groupsTable_nameCell">
+                                    <span data-bind='text:name'></span>
+                                </li>
+                            </ul>
+                        </li>
+
+                    </ul>
+                </div>
+
+                <br />
+            </div>
+            <div class="infoTable_divider"></div>
+            <!-- sitesTable lists spatial elements and toggles their visibility -->
+            <span class="containerHeader">spatial layers</span>
+            <div id="ko_spatialLayersContainer">
+                <ul class="groupsTable_grpCell" data-bind="foreach: spatialLayers">
+                    <li class="groupsTable_nameCell"  data-bind="click: $root.spatialLayerClick.bind($data, $parent), css: {'listEntryActive':isActive}">
+                        <span data-bind="text: name"></span>
+
+                    </li>
+                </ul>
+            </div>
         </div>
-        <div id="loaderProgressDisplay">
-            <span class="progressHeader">
+
+        <div id="cesiumContainer"></div>
+    </div>
+    <div id="loaderProgressDisplay">
+        <span class="progressHeader">
                 Loading data..
             </span>
-            <span id="loaderProgressBar">&nbsp;</span>
-        </div>
-        <div id="weatherReadout">
-            <div id="weather_readout_title"></div>
-            <div id="weather_readout_description"></div>
-            <br/>
-            <div id="weather_readout_content"></div>
-        </div>
-        <!-- <div id="groupsPanel">
-            Data groups:<br />
-            <br />
-            <table id="groupsTable">
-                <tr>
-                    <td class="groupsTable_cbCell">
-                        show
-                    </td>
-                    <td class="groupsTable_nameCell_title">
-                        data group name (click to zoom)
-                    </td>
-                </tr>
-            </table>
-            <br />
-            <table id="sitesTable">
-                <tr>
-                    <td class="groupsTable_cbCell">
-                        Sites:
-                    </td>
-                    <td class="groupsTable_nameCell_title">
-                        
-                    </td>
-                </tr>
-                <tr>
-                    <td class="groupsTable_cbCell">
-                    </td>
-                    <td class="groupsTable_siteSelector_main">
-                        <select id="sitesSelector">
-
-                        </select>
-                    </td>
-                    <td class="groupsTable_siteSelector_icon">
-                        <i class="material-icons">
-                                keyboard_arrow_down
-                        </i>
-                    </td>
-                </tr>
-            </table>
-        </div> -->
-        <div id="overlay_entity_data">
-            <span id="overlay_entity_header">
+        <span id="loaderProgressBar">&nbsp;</span>
+    </div>
+    <div id="weatherReadout">
+        <div id="weather_readout_title"></div>
+        <div id="weather_readout_description"></div>
+        <br/>
+        <div id="weather_readout_content"></div>
+    </div>
+    <div id="overlay_entity_data">
+        <span id="overlay_entity_header">
                 entity overlay box
             </span>
-        </div>
-        <script>
-        </script>
-    </body>
+    </div>
+
+</body>
+
 </html>
