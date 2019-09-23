@@ -104,7 +104,10 @@ function viewModel() {
     };
 
     self.addChildToLayer = function(tag,name){
-        //console.log(tag, name);
+        console.log(tag, name);
+        if(tag.indexOf("wellbeing")>0){
+            console.log("wellbeing");
+        }
         var parent = self.tagExistsInLayers(tag);
         if(parent!=null) 
         {
@@ -1458,7 +1461,7 @@ function processPolylineData(description, sourceElement)
     {
         var name = sourceElement.name;
         addDisplayGroup(tag, grp, sourceElement.name);
-        g_koPolylinelist.push({tag, name });
+        
        
     }
 }
@@ -2169,9 +2172,9 @@ function updatePreviewEntity(time, result)
  */
 function addDisplayGroup(name, group, groupName)
 {
-  //  console.log(name);
+
     var addToggle = false;
-    
+    g_koPolylinelist.push({"tag": name, "name": groupName });
     if(groupName)
     {
         g_displayGroups.set(groupName, group);
