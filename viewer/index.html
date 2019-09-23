@@ -74,7 +74,7 @@
                         <li class="infoLayers_maincategory">
                             <span data-bind='text: name'></span>
                             <ul data-bind="foreach: children">
-                                <li data-bind='click: $root.siteClick'  class="groupsTable_nameCell">
+                                <li data-bind='click: $root.siteClick'  class="groupsTable_leafCell">
                                     <span data-bind='text:name'></span>
                                 </li>
                             </ul>
@@ -90,7 +90,7 @@
             <span class="containerHeader">backgrounds</span>
             <div id="ko_spatialLayersContainer">
                 <ul class="groupsTable_grpCell" data-bind="foreach: spatialLayers_2">
-                    <li class="groupsTable_nameCell"  data-bind="click: $root.spatialLayerClick.bind($data), css: {'listEntryActive':visible}">
+                    <li class="groupsTable_leafCell"  data-bind="click: $root.spatialLayerClick.bind($data), css: {'listEntryActive':visible}">
                         <span data-bind="text: name"></span>
 
                     </li>

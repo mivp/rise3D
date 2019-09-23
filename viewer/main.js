@@ -104,7 +104,7 @@ function viewModel() {
     };
 
     self.addChildToLayer = function(tag,name){
-        console.log(tag, name);
+    //    console.log(tag, name);
         if(tag.indexOf("wellbeing")>0){
             console.log("wellbeing");
         }
