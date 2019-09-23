@@ -202,6 +202,7 @@ var g_siteDescriptors = new Map();
 var g_dataCatalog = null;
 var g_koPolylinelist = [];
 var g_dataStructure = {}; // experimental - this will hold all data categories and groups in one object
+var g_mappingLegendData = {};
 
 // loader
 var _g_loaderTotalSteps = 0;
@@ -1771,6 +1772,87 @@ async function processDataSources(description)
     });
 }
 
+async function loadLegendData()
+{
+    var response = await fetch("data_survey_response_mapping.json");
+    var text = await response.text();
+    await processLegendData(text);
+}
+
+async function processLegendData(description)
+{
+    return new Promise((resolve, reject) => {
+        var mappings = JSON.parse(description);
+
+        g_mappingLegendData = Object.assign(g_mappingLegendData, mappings);
+        
+        console.log("Mappings:");
+        console.log(g_mappingLegendData);
+
+        var selector = document.getElementById("house_survey_field_selector");
+
+        for(var field of g_mappingLegendData.responseMappings[0].fields)
+        {
+            console.log("Field: " + field.name + "(" + field.caption + ")");
+            var opt = document.createElement('option');
+            
+            opt.value = field.name;
+            opt.text = field.caption;
+
+            selector.add(opt);
+        }
+
+        selector.addEventListener('input', (e) => {
+
+            // TODO: move this to a separate function
+            var field = null;
+
+            for(var f of g_mappingLegendData.responseMappings[0].fields)
+            {
+                if(f.name == e.target.value)
+                {
+                    field = f;
+                    break;
+                }
+            }
+
+            if(field == null)
+            {
+                // shouldn't happen
+                return;
+            }
+
+            var container = document.getElementById('house_survey_legend_content');
+            container.innerHTML = "";
+
+            var hdr = document.createElement('span');
+            hdr.innerHTML = field.description + "<br />";
+            hdr.classList.add("survey_legend_description");
+
+            var tbl = document.createElement('table');
+            var row = tbl.insertRow();
+            row.insertCell(); row.insertCell();
+
+            field.mappings.map((mapping, index) => {
+                row = tbl.insertRow();
+                var hdrCell = row.insertCell();
+                hdrCell.classList.add('overlay_entity_fieldname');
+                hdrCell.innerHTML = `${mapping.value}:`;
+
+                var valCell = row.insertCell();
+                valCell.classList.add('overlay_entity_value');
+                valCell.innerHTML = `${mapping.description}`;
+            });
+
+            container.appendChild(hdr);
+            container.appendChild(tbl);            
+
+        });
+
+        resolve();
+    });
+}
+
 function getUrlVars() {
     var vars = {};
     var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
@@ -1799,7 +1881,7 @@ async function startup()
     viewer = new Cesium.Viewer('cesiumContainer', 
         {
             // 'vrButton' : true    // cardboard (not webVR) mode switch button
-            timeline: false,
+            timeline: true,
             animation: false,
             homeButton: false
         }
@@ -1826,6 +1908,10 @@ async function startup()
     //    geocoder: false
     //});
 
+    // hide/rearrange elements for startup state
+    // TODO: move this and cleanup
+    document.getElementById('house_survey_legend').style.visibility = 'hidden';
+
     // load classification and categorisation types before loading data
     await loadCategoryData();
 
@@ -1837,6 +1923,9 @@ async function startup()
 
     // load external data sources
     await loadDataSources();
+
+    // load legend tables
+    await loadLegendData();
 
     console.log("Loaded data sources, structure is now: ");
     console.log(g_dataStructure);
@@ -1937,7 +2026,9 @@ async function startup()
         {
             viewer.selectedEntity = null;
             selectedPoint = null;
+            // TODO: make a 'reset overlays/selection' function that clears all popups that were accessed by clicking something
             document.getElementById('overlay_entity_data').style.visibility = 'hidden';
+            document.getElementById('house_survey_legend').style.visibility = 'hidden';
             return;
         }
 
@@ -2001,8 +2092,7 @@ async function startup()
             // show/hide overlay
             if('avgLong' in dataObj.data)
             {
-                // document.getElementById('overlay_entity_data').style.visibility = 'visible';
-                document.getElementById('overlay_entity_data').setAttribute("visibility", 'visible');
+                document.getElementById('overlay_entity_data').style.visibility = 'visible';
                 // document.getElementById('overlay_entity_header').innerHTML =
                 //     dataObj.type + ':' +
                 //     '<br />' + 
@@ -2034,11 +2124,13 @@ async function startup()
 
                 container.appendChild(hdr);
                 container.appendChild(tbl);
+
+                document.getElementById('house_survey_legend').style.visibility = 'visible';
             }
             else
             {
-                // document.getElementById('overlay_entity_data').style.visibility = 'hidden';
-                document.getElementById('overlay_entity_data').setAttribute("visibility", 'hidden');
+                document.getElementById('overlay_entity_data').style.visibility = 'hidden';
+                document.getElementById('house_survey_legend').style.visibility = 'hidden';
             }
         }
         else
@@ -2181,8 +2273,8 @@ function updatePreviewEntity(time, result)
 
         // document.getElementById('overlay_entity_data').style.top = wndPos.y - 75;
         // document.getElementById('overlay_entity_data').style.left = wndPos.x + 50;
-        document.getElementById('overlay_entity_data').setAttribute("top", (wndPos.y - 75).toString());
-        document.getElementById('overlay_entity_data').setAttribute("left", (wndPos.x + 50).toString());
+        overlay.style.top = (wndPos.y - 75) + 'px';
+        overlay.style.left = (wndPos.x + 50) + 'px';
     }
 
     return description;

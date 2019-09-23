@@ -53,8 +53,8 @@
                                     <div data-bind="foreach: children, visible: !isLocked">
                                         <div  data-bind="click: $root.infoLayerClick.bind($data,$parent), css: {'listEntryActive':isActive, 'notClickable': isLocked || hasChildren}" class="groupsTable_leafCell">
                                             <div class="canHaveLock" >
-                                                    <span data-bind="css:{'material-icons':isLocked}, visible: isLocked" >lock</span><span class="readable" data-bind='text: name'></span>
-                                                </div>
+                                                <span data-bind="css:{'material-icons':isLocked}, visible: isLocked" >lock</span><span class="readable" data-bind='text: name'></span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -123,6 +123,19 @@
         <span id="overlay_entity_header">
                 entity overlay box
             </span>
+    </div>
+    <div id="house_survey_legend" class="survey_legend_container">
+        <div id="house_survey_legend_header" >
+            <span class="survey_legend_header_main">Legend - House survey responses</span>
+            <br /><br />
+            Field: <select id="house_survey_field_selector">
+                <option disabled="true" selected="true">Select a survey response field</option>
+            </select>
+            <br /><br />
+        </div>
+        <div id="house_survey_legend_content" class="survey_legend_content">
+
+        </div>
     </div>
 
 </body>
