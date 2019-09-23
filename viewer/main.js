@@ -1,5 +1,9 @@
 function viewModel() {
     var self = this;
+
+    /*attempt to restructure */
+    self.infoLayers_2 = ko.observableArray();
+    self.spatialLayers_2 = ko.observableArray();
     self.siteList_cities = ko.observableArray();
     self.infoLayers = ko.observableArray();
     self.spatialLayers = ko.observableArray();
@@ -22,9 +26,58 @@ function viewModel() {
         onSiteClick(evt);
     }
 
+
+    //this goes through the created data structure. this should be done recursively but recursion hurts my brain. sorry.
+    self.receiveData = function(data){
+        //infoLayers2
+        var incominginfolayers = data.datagroups;
+
+       for(var i = 0; i < incominginfolayers.length; i++){
+            currentElement = incominginfolayers[i];
+            currentElement = self.convertToObservableElement(currentElement);
+            for(var j = 0; j < incominginfolayers[i].children.length; j ++){
+                currentElement.children.push(self.convertToObservableElement(incominginfolayers[i].children[j]));
+                for(var k = 0; k < incominginfolayers[i].children[j].children.length; k ++){
+                    currentElement.children[j].children[k].push(self.convertToObservableElement( incominginfolayers[i].children[j].children[k]));
+                }
+            }
+            self.infoLayers_2.push(currentElement);
+        }
+      
+        //spatial Layers 2
+        var incomingSpatialLayers = data.spatial_layers;
+        for(var i = 0; i < incomingSpatialLayers.length; i++){
+            currentElement = incomingSpatialLayers[i];
+            currentElement = self.convertToObservableElement(currentElement);
+            
+            self.spatialLayers_2.push(currentElement);
+        }
+    }
+
+ 
+    //transforms a JS object literal to an object usable by knockout.
+    self.convertToObservableElement = function(obj){
+       // console.log(obj);
+        var returnee = {};
+       
+        returnee.tags = obj.tags;
+        returnee.availability = ko.observable(obj.availability);
+        returnee.isActive = ko.observable(false);
+        returnee.isLocked = returnee.availability() == "available" ? false : true;
+        returnee.name =   obj.name;
+        returnee.visible = ko.observable(obj.visible);
+     
+        if(obj.children != null){
+            returnee.children = ko.observableArray();
+        }
+        returnee.hasChildren = ko.computed(function(){
+            return returnee.children != null && returnee.children.length > 0;
+        },this);
+        return returnee;
+    };
     self.addInfoLayer = function(layer){
         self.infoLayers.push( { name: layer.name, tags: layer.tags, children: ko.observableArray() });
-    }
+    };
 
     self.addSpatialLayer = function(layer){
         self.spatialLayers.push( { name: layer.name, tags: layer.tags, isActive: ko.observable(true), visibility: layer.visibility, children: ko.observableArray()})
@@ -32,34 +85,53 @@ function viewModel() {
             self.spatialLayers()[self.spatialLayers().length-1].isActive(false);
             spatialLayerClicked(layer.name,false);
         }
-    }
+    };
     self.infoLayerClick = function(parent,data){
-     //   console.log("infoLayerclick  " + data.name); 
+       console.log("infoLayerclick  " + data.name); 
+       console.log("infoLayerclick  " + parent.name); 
         data.isActive(!data.isActive());
         layerClicked(data.name, data.isActive(), parent.tags[0]);
    //     console.log(parent);
-    }
+    };
 
-      self.spatialLayerClick = function(object){
+    self.spatialLayerClick = function(object){
         console.log("clicked: " + object.name)
-        object.isActive(!object.isActive());
-        spatialLayerClicked(object.name, object.isActive());
+        object.visible(!object.visible());
+        spatialLayerClicked(object.name, object.visible());
    //     console.log(parent);
-    }
-    self.addChildToLayer = function(tag,name, locked){
-        var layerIndex = self.getInfoLayerIndex(tag);
-        if(layerIndex!=-1 && layerIndex != undefined){
-          //  self.infoLayers()[layerIndex].addChild(name);  //add to object
-            //also add to observable array
-            var displayAtstartup = false;
-            if(tag=="datagrp_design"){
-                displayAtstartup = true;
-            }
+    };
 
-            self.infoLayers()[layerIndex].children.push({"name" : name, "isActive": ko.observable(displayAtstartup), "isLocked": ko.observable(locked)});
+    self.addChildToLayer = function(tag,name){
+        console.log(tag, name);
+        var parent = self.tagExistsInLayers(tag);
+        if(parent!=null) 
+        {
+            parent.children.push({ 'name':name, 'tag':tag, 'isActive': ko.observable(true), 'isLocked':false, 'hasChildren':false });
         } else {
-            console.log("Layer not defined? " + tag + " - " + name);
+            console.log("Did not insert child " + name + " cause tag: " + tag + " does not exist in info layers.");
         }
+ 
+        console.log(self.infoLayers_2());
+        //var layerIndex = self.getInfoLayerIndex(tag);
+        //self.infoLayers()[layerIndex].children.push({"name" : name, "isActive": ko.observable(displayAtstartup), "isLocked": ko.observable(locked)});
+        
+    }
+
+    self.tagExistsInLayers = function(tag){
+        for(var i = 0; i < self.infoLayers_2().length; i ++){
+            var el = self.infoLayers_2()[i];
+            if(el.tags.indexOf(tag)>=0){
+                return el;
+            } else {
+                for( var j = 0; j < el.children().length; j++) {
+                    var el2 = el.children()[j];
+                    if(el2.tags.indexOf(tag)>=0){
+                        return el2;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     self.getInfoLayerIndex = function(tag){
@@ -122,7 +194,7 @@ var g_displayLayers = new Map();    // new approach at grouping spatial data - w
 var g_infoLayerContainers = new Map();  // a map of HTML elements (probably all <tr>) that hold toggles for data layers, identified by the data layer tag name
 var g_siteDescriptors = new Map();
 var g_dataCatalog = null;
-
+var g_koPolylinelist = [];
 var g_dataStructure = {}; // experimental - this will hold all data categories and groups in one object
 
 // loader
@@ -167,17 +239,17 @@ async function loadSceneData()
     await processSceneData(text);
 }
 
-function spatialLayerClicked(name, isActive){
-    console.log("clicked spatial layer: " + name + "   is now active: " + isActive);
+function spatialLayerClicked(name, visible){
+    console.log("clicked spatial layer: " + name + "   is now visible: " + visible);
          var layer = getSpatialLayer(name);
-         layer.visible = isActive;
+         layer.visible = visible;
          setVisibilityByTags(layer.tags, layer.visible);
 }
 
 function layerClicked(name, active, tag){
     console.log("Clicked element: " + name + " tag: " + tag + " now active: " + active);
     //@Daniel: This gets called from all clicks on the layer menues
-    if(tag=="datagrp_design"){
+    if(tag.indexOf("datagrp_") >=0){
         var group =  g_displayGroups.get(name);
         group.show = active;
 
@@ -1228,7 +1300,7 @@ async function loadPolylineData(element)
 
 function processPolylineData(description, sourceElement)
 {
- //uncomment   console.log("processPolylineData()");
+    console.log("processPolylineData()");
     // console.log(description);
     var geometry = JSON.parse(description.toString());
 
@@ -1382,7 +1454,10 @@ function processPolylineData(description, sourceElement)
 
     for(var tag of sourceElement.tags)
     {
+        var name = sourceElement.name;
         addDisplayGroup(tag, grp, sourceElement.name);
+        g_koPolylinelist.push({tag, name });
+       
     }
 }
 
@@ -1491,8 +1566,8 @@ async function processCategoryData(description)
   var tbl = document.createElement('table');
             // row = tbl.insertRow();
             g_infoLayerContainers.set(group.tags[0], tbl);
-            var ko_infolayer = {"name" : group.name, "tags" : group.tags};
-            ko_viewModel.addInfoLayer(ko_infolayer);
+         //   var ko_infolayer = {"name" : group.name, "tags" : group.tags};
+         //   ko_viewModel.addInfoLayer(ko_infolayer);
            // ko_infoLayers.push(ko_infolayer);
             // var cbCell = row.insertCell();
             // cbCell.className = "groupsTable_cbCell";
@@ -1527,8 +1602,8 @@ async function processCategoryData(description)
 */
             let layerName = layer.name;
            
-            var ko_spatialLayer = {name: layer.name, tags: layer.tags, visibility: layer.visible };
-            ko_viewModel.addSpatialLayer(ko_spatialLayer);
+          //  var ko_spatialLayer = {name: layer.name, tags: layer.tags, visibility: layer.visible };
+           // ko_viewModel.addSpatialLayer(ko_spatialLayer);
          /*   btn.onclick = function() {
 
                 var layer = getSpatialLayer(layerName);
@@ -1603,6 +1678,7 @@ async function processDataSources(description)
             // grpCell.className = "groupsTable_grpCell";
             // grpCell.colSpan = 2;
             // grpCell.innerText = group.name;
+        //    ko_viewModel.addChildToLayer(src);
             for(var tag of src.tags)
             {
                 var grpContainer = g_infoLayerContainers.get(tag);
@@ -1630,7 +1706,7 @@ async function processDataSources(description)
                     cbCell.appendChild(btn);
             
                     let layerName = src.name;
-                    ko_viewModel.addChildToLayer(tag,layerName,locked);
+                   
                     btn.onclick = function() {
                         // group.show = !group.show;
             
@@ -1703,6 +1779,7 @@ async function startup()
     //initialise mvc
     ko_viewModel = new viewModel();
     ko.applyBindings(ko_viewModel);
+   // ko.applyBindings(ko_viewModel);
     // create a Cesium viewer and load Earth data
     
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0ZDgyMmRiYS0zMjMyLTQxMzMtYTNiMC05ZmZiZTRkZWQ2YTQiLCJpZCI6ODMyMywic2NvcGVzIjpbImFzciIsImdjIl0sImlhdCI6MTU1MTc1MzAzNX0.wDKGdaNCaseIbASuOFeSRdXF-Ch4uGfMQdeVBKTCzNU';
@@ -1751,13 +1828,18 @@ async function startup()
 
     console.log("Loaded data sources, structure is now: ");
     console.log(g_dataStructure);
+   
+    ko_viewModel.receiveData(g_dataStructure);
+    for(var i = 0; i < g_koPolylinelist.length; i ++){
+        ko_viewModel.addChildToLayer(g_koPolylinelist[i].tag, g_koPolylinelist[i].name);
+    }
 
     document.getElementById('loaderProgressDisplay').style.display = 'none';
     
     // merge all timesteps together
     g_timeIntervals = new Cesium.TimeIntervalCollection();
     console.log('Combining time interval collections, count: ' + g_intervalGroups.size);
-
+//uncommentfor fastNH
     for(var collection of g_intervalGroups.values())
     {
         console.log('Adding time interval collection, length: ' + collection.length);
@@ -1790,7 +1872,7 @@ async function startup()
 
     // look at the default element, this should be selected as part of the loading process
     viewer.zoomTo(g_defaultElement);
-    
+   
     // init any callbacks
     // 20190911 - replaced by events for each site header
     // var selector = document.getElementById("sitesSelector");
@@ -2085,8 +2167,9 @@ function updatePreviewEntity(time, result)
  */
 function addDisplayGroup(name, group, groupName)
 {
+  //  console.log(name);
     var addToggle = false;
-
+    
     if(groupName)
     {
         g_displayGroups.set(groupName, group);
@@ -2097,7 +2180,9 @@ function addDisplayGroup(name, group, groupName)
     }
 
     var layer = g_displayLayers.get(name);
-
+    //if(layer!=undefined){
+    //ko_viewModel.addChildToLayer();
+    //}
     // if the layer doesn't exist, then create it
     if(layer == undefined)
     {
@@ -2110,7 +2195,7 @@ function addDisplayGroup(name, group, groupName)
     g_displayLayers.set(name, layer);
 
     // check if there is a container that matches the tag name
-    var grpContainer = g_infoLayerContainers.get(name);
+   /* var grpContainer = g_infoLayerContainers.get(name);
     if(grpContainer !== undefined)
     {
         var tbl = grpContainer;
@@ -2144,7 +2229,8 @@ function addDisplayGroup(name, group, groupName)
         var nameCell = row.insertCell();
         nameCell.className = "groupsTable_nameCell";
         nameCell.innerHTML = groupName;
-         ko_viewModel.addChildToLayer(name,groupName);
+       
+        
         nameCell.onclick = function()
         {
             console.log("layer visi");
@@ -2160,7 +2246,7 @@ function addDisplayGroup(name, group, groupName)
                 btn.classList.add("groupsTable_toggleBtn_inactive");
                 btn.classList.remove("groupsTable_toggleBtn_active");
             }  
-        }
+        }*/
     }
 
     // not needed for spatial layers anymore
@@ -2291,7 +2377,7 @@ function addDisplayGroup(name, group, groupName)
     }
 
     // dragElement(document.getElementById("groupsPanel"));
-}
+
 
 function setGroupColour(colour, group, options)
 {
