@@ -129,27 +129,15 @@
             ]
         },
         {
-            "name" : "Region meshes",
+            "name" : "Mesh (surface) model",
             "tags" : [
                 "pointcloud_mesh"
             ]
         },
         {
-            "name" : "Orthophotos",
+            "name" : "Aerial orthophotos",
             "tags" : [
                 "orthophoto"
-            ]
-        },
-        {
-            "name" : "3D buildings",
-            "tags" : [
-                "shape"
-            ]
-        },
-        {
-            "name" : "3D object models",
-            "tags" : [
-                "mesh_spatial"
             ]
         }
     ]
