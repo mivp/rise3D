@@ -1206,7 +1206,7 @@ function processShapeData(description, sourceElement)
 
     for(var tag of sourceElement.tags)
     {
-        addDisplayGroup(tag, grp);
+        addDisplayGroup(tag, grp, sourceElement.name);
     }    
 }
 
