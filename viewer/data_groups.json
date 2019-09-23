@@ -97,7 +97,14 @@
             ],
             "availability" : "available",
             "children" : [
-                
+                {
+                    "name" : "Survey data",
+                    "tags" : [
+                        "datagrp_health_survey"
+                    ],
+                    "availability" : "locked",
+                    "children" : []
+                }
             ]
         },
         {
@@ -107,7 +114,14 @@
             ],
             "availability" : "available",
             "children" : [
-                
+                {
+                    "name" : "Survey data",
+                    "tags" : [
+                        "datagrp_wellbeing_survey"
+                    ],
+                    "availability" : "locked",
+                    "children" : []
+                }
             ]
         },
         {

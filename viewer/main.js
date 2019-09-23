@@ -61,17 +61,16 @@ function viewModel() {
     self.convertToObservableElement = function(obj){
        // console.log(obj);
         var returnee = {};
-       
+        if(obj.name == "Wellbeing") {
+            console.log(obj);
+        }
         returnee.tags = obj.tags;
         returnee.availability = ko.observable(obj.availability);
         returnee.isActive = ko.observable(false);
         returnee.isLocked = returnee.availability() == "available" ? false : true;
         returnee.name =   obj.name;
         returnee.visible = ko.observable(obj.visible);
-     
-        if(obj.children != null){
-            returnee.children = ko.observableArray();
-        }
+        returnee.children = ko.observableArray();
         returnee.hasChildren = ko.computed(function(){
             return returnee.children != null && returnee.children.length > 0;
         },this);
@@ -1684,9 +1683,16 @@ async function processDataSources(description)
             // grpCell.colSpan = 2;
             // grpCell.innerText = group.name;
         //    ko_viewModel.addChildToLayer(src);
+
             for(var tag of src.tags)
             {
                 var grpContainer = g_infoLayerContainers.get(tag);
+
+                // if(tag == "datagrp_wellbeing")
+                // {
+                //     // g_koPolylinelist.push({"tag": tag, "name": src.name });
+                // }
+                g_koPolylinelist.push({"tag": tag, "name": src.name });
 
                 if(grpContainer !== undefined)
                 {
