@@ -35,6 +35,7 @@ function viewModel() {
        for(var i = 0; i < incominginfolayers.length; i++){
             currentElement = incominginfolayers[i];
             currentElement = self.convertToObservableElement(currentElement);
+            
             for(var j = 0; j < incominginfolayers[i].children.length; j ++){
                 currentElement.children.push(self.convertToObservableElement(incominginfolayers[i].children[j]));
                 for(var k = 0; k < incominginfolayers[i].children[j].children.length; k ++){
@@ -1858,7 +1859,7 @@ async function startup()
     // merge all timesteps together
     g_timeIntervals = new Cesium.TimeIntervalCollection();
     console.log('Combining time interval collections, count: ' + g_intervalGroups.size);
-//uncommentfor fastNH
+/*uncommentfor fastNH
     for(var collection of g_intervalGroups.values())
     {
         console.log('Adding time interval collection, length: ' + collection.length);
@@ -1891,7 +1892,7 @@ async function startup()
 
     // look at the default element, this should be selected as part of the loading process
     viewer.zoomTo(g_defaultElement);
-   
+   */
     // init any callbacks
     // 20190911 - replaced by events for each site header
     // var selector = document.getElementById("sitesSelector");
