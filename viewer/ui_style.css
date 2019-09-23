@@ -126,6 +126,7 @@ body
     height: 50vh;
     max-height: 50vh;
     display: block;
+    font-family: 'Questrial', sans-serif;
 }
 
 .groupsTable_grpCell
@@ -157,20 +158,28 @@ li {
 .groupsTable_nameCell
 {
     width: 300px;
+
+    padding-left: 10px;
+    color: #d0d0d0;
+   
+    user-select: none;
+    border-top: 1px solid rgba(255,255,255,0.2);
+}
+.groupsTable_leafCell
+{
+    width: 300px;
     height: 25px;
     padding-left: 20px;
     color: #d0d0d0;
-    font-family: 'Questrial', sans-serif;
     user-select: none;
     text-align: left;
-    line-height: 25px;
     border-top: 1px  solid rgba(255,255,255,0.2);
+
 }
 
 .groupsTable_nameCell_title
 {
     width: 300px;
-    height: 25px;
     color: #d0d0d0;
     font-family: 'Questrial', sans-serif;
 }
@@ -443,12 +452,12 @@ https://google.github.io/material-design-icons/
 {
     background: #bddbbe;
     color: darkgreen ;
-    border: 1.5px dotted darkgreen;
+    font-style: bold;
 }
 
 ul {
   padding: 0;
-  max-width: 300px;
+  width: 300px;
 }
 
 /* List element */
@@ -472,4 +481,5 @@ li {
 
 .notClickable {
     pointer-events: none;
+
 }

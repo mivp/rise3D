@@ -1,6 +1,6 @@
+<!DOCTYPE html>
 <html lang="en">
 <meta charset="utf-8">
-
 <head>
     <!-- <script src="https://cesiumjs.org/releases/1.52/Build/Cesium/Cesium.js"></script> -->
     <script src="https://cesiumjs.org/releases/1.60/Build/Cesium/Cesium.js"></script>
@@ -34,16 +34,26 @@
             <!-- groupsTable lists information layers and toggles data visibility -->
             <div id="groupsContainer">
                 <div id="ko_groupsContainer">
-                    <ul class="groupsTable_grpCell" data-bind="foreach: infoLayers">
-                        <li class="infoLayers_maincategory" >
-                            <span data-bind='text: name'></span>
-                            <ul data-bind="foreach: children">
-                                <li  data-bind="click: $root.infoLayerClick.bind($data,$parent), css: {'listEntryActive':isActive, 'notClickable': isLocked}" class="groupsTable_nameCell canHaveLock">
-                                    <span data-bind="css:{'material-icons':isLocked}, visible: isLocked" > lock </span><span class="readable" data-bind='text: name'></span>
-                                </li>
-                            </ul>
-                        </li>
-                    </ul>
+                    <div class="groupsTable_grpCell" data-bind="foreach: infoLayers_2">
+                        <div class="infoLayers_maincategory" data-bind="'notClickable': isLocked || children.length>0" >
+                            <div class="canHaveLock" >
+                                <span data-bind="css:{'material-icons':isLocked}, visible: isLocked" > lock</span><span class="readable" data-bind='text: name'></span>
+                            </div>
+                            <div data-bind="foreach: children, visible: !isLocked">
+
+                                <div  data-bind="css: {'listEntryActive':isActive, 'notClickable': isLocked  || children.length>0}" class="groupsTable_nameCell ">
+                                    <div class="canHaveLock" >
+                                        <span data-bind="css:{'material-icons':isLocked}, visible: isLocked" >lock</span><span class="readable" data-bind='text: name'></span>
+                                    </div>
+                                    <div data-bind="foreach: children, visible: !isLocked">
+                                        <div  data-bind="click: $root.infoLayerClick.bind($data,$parent), css: {'listEntryActive':isActive, 'notClickable': isLocked || hasChildren}" class="groupsTable_leafCell">
+                                             <span class="readable" data-bind='text: name'></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -64,7 +74,7 @@
                         <li class="infoLayers_maincategory">
                             <span data-bind='text: name'></span>
                             <ul data-bind="foreach: children">
-                                <li type="disc" data-bind='click: $root.siteClick'  class="groupsTable_nameCell">
+                                <li data-bind='click: $root.siteClick'  class="groupsTable_nameCell">
                                     <span data-bind='text:name'></span>
                                 </li>
                             </ul>
@@ -79,8 +89,8 @@
             <!-- sitesTable lists spatial elements and toggles their visibility -->
             <span class="containerHeader">backgrounds</span>
             <div id="ko_spatialLayersContainer">
-                <ul class="groupsTable_grpCell" data-bind="foreach: spatialLayers">
-                    <li class="groupsTable_nameCell"  data-bind="click: $root.spatialLayerClick.bind($data), css: {'listEntryActive':isActive}">
+                <ul class="groupsTable_grpCell" data-bind="foreach: spatialLayers_2">
+                    <li class="groupsTable_nameCell"  data-bind="click: $root.spatialLayerClick.bind($data), css: {'listEntryActive':visible}">
                         <span data-bind="text: name"></span>
 
                     </li>
