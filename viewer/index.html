@@ -45,9 +45,16 @@
                                     <div class="canHaveLock" >
                                         <span data-bind="css:{'material-icons':isLocked}, visible: isLocked" >lock</span><span class="readable" data-bind='text: name'></span>
                                     </div>
-                                    <div data-bind="foreach: children, visible: !isLocked">
+                                    <!-- <div data-bind="foreach: children, visible: !isLocked">
                                         <div  data-bind="click: $root.infoLayerClick.bind($data,$parent), css: {'listEntryActive':isActive, 'notClickable': isLocked || hasChildren}" class="groupsTable_leafCell">
                                              <span class="readable" data-bind='text: name'></span>
+                                        </div>
+                                    </div> -->
+                                    <div data-bind="foreach: children, visible: !isLocked">
+                                        <div  data-bind="click: $root.infoLayerClick.bind($data,$parent), css: {'listEntryActive':isActive, 'notClickable': isLocked || hasChildren}" class="groupsTable_leafCell">
+                                            <div class="canHaveLock" >
+                                                    <span data-bind="css:{'material-icons':isLocked}, visible: isLocked" >lock</span><span class="readable" data-bind='text: name'></span>
+                                                </div>
                                         </div>
                                     </div>
                                 </div>

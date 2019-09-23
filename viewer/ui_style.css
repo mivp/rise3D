@@ -175,6 +175,13 @@ li {
     text-align: left;
     line-height:40px;
     margin-top: 1px;
+    font-weight: 400;
+}
+
+.groupsTable_leafCell:hover
+{
+    font-weight: 800;
+    color: #f0f0f0;
 }
 
 .groupsTable_nameCell_title
@@ -388,8 +395,8 @@ https://google.github.io/material-design-icons/
     background-color: #303030;
     color: #d0d0d0;
     position: fixed;
-    top: 150px;
-    left: 150px;
+    top: 250px;
+    left: 250px;
     visibility: hidden;
 }
 

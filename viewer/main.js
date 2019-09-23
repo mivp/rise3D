@@ -102,7 +102,7 @@ function viewModel() {
    //     console.log(parent);
     };
 
-    self.addChildToLayer = function(tag,name){
+    self.addChildToLayer = function(tag,name, locked = false, selected = false){
     //    console.log(tag, name);
         if(tag.indexOf("wellbeing")>0){
             console.log("wellbeing");
@@ -110,7 +110,9 @@ function viewModel() {
         var parent = self.tagExistsInLayers(tag);
         if(parent!=null) 
         {
-            parent.children.push({ 'name':name, 'tag':tag, 'isActive': ko.observable(true), 'isLocked':false, 'hasChildren':false });
+            // parent.children.push({ 'name':name, 'tag':tag, 'isActive': ko.observable(true), 'isLocked':false, 'hasChildren':false });
+            // parent.children.push({ 'name':name, 'tag':tag, 'isActive': ko.observable(true), 'isLocked':locked, 'hasChildren':false });
+            parent.children.push({ 'name':name, 'tag':tag, 'isActive': ko.observable(selected), 'isLocked':locked, 'hasChildren':false });
         } else {
             console.log("Did not insert child " + name + " cause tag: " + tag + " does not exist in info layers.");
         }
@@ -253,7 +255,17 @@ function spatialLayerClicked(name, visible){
 function layerClicked(name, active, tag){
     console.log("Clicked element: " + name + " tag: " + tag + " now active: " + active);
     //@Daniel: This gets called from all clicks on the layer menues
-    if(tag.indexOf("datagrp_") >=0){
+    // TODO: associate this with a tag or something other than a name, which might change for aesthetic but not functionality purposes!
+    if(name == "Land tenure")
+    {
+        for(var src of g_dataCatalog.dataSources)
+        {
+            if(src.name == name)
+            {
+                applyDataSourceToBuildings(src.fieldname, active);
+            }
+        }        
+    } else if(tag.indexOf("datagrp_") >=0){
         var group =  g_displayGroups.get(name);
         group.show = active;
 
@@ -267,17 +279,6 @@ function layerClicked(name, active, tag){
                 btn.classList.add("groupsTable_toggleBtn_inactive");
                 btn.classList.remove("groupsTable_toggleBtn_active");
             }  */
-    }
-    // TODO: associate this with a tag or something other than a name, which might change for aesthetic but not functionality purposes!
-    else if(name == "Land tenure")
-    {
-        for(var src of g_dataCatalog.dataSources)
-        {
-            if(src.name == name)
-            {
-                applyDataSourceToBuildings(src.fieldname, active);
-            }
-        }        
     }
 }
 function processSceneData(data)
@@ -1692,7 +1693,7 @@ async function processDataSources(description)
                 // {
                 //     // g_koPolylinelist.push({"tag": tag, "name": src.name });
                 // }
-                g_koPolylinelist.push({"tag": tag, "name": src.name });
+                g_koPolylinelist.push({"tag": tag, "name": src.name, "availability" : src.availability == "available"});
 
                 if(grpContainer !== undefined)
                 {
@@ -1842,7 +1843,14 @@ async function startup()
    
     ko_viewModel.receiveData(g_dataStructure);
     for(var i = 0; i < g_koPolylinelist.length; i ++){
-        ko_viewModel.addChildToLayer(g_koPolylinelist[i].tag, g_koPolylinelist[i].name);
+        // DW: ugly hack, use the 'available' property to set 'currently selected' as well, so all available layers are default on
+        // DW: even uglier hack, disable land tenure by default for demo
+        var showDefault = g_koPolylinelist[i].availability;
+        if(g_koPolylinelist[i].name == "Land tenure")
+        {
+            showDefault = false;
+        }
+        ko_viewModel.addChildToLayer(g_koPolylinelist[i].tag, g_koPolylinelist[i].name, !g_koPolylinelist[i].availability, showDefault);
     }
 
     document.getElementById('loaderProgressDisplay').style.display = 'none';
@@ -1993,7 +2001,8 @@ async function startup()
             // show/hide overlay
             if('avgLong' in dataObj.data)
             {
-                document.getElementById('overlay_entity_data').style.visibility = 'visible';
+                // document.getElementById('overlay_entity_data').style.visibility = 'visible';
+                document.getElementById('overlay_entity_data').setAttribute("visibility", 'visible');
                 // document.getElementById('overlay_entity_header').innerHTML =
                 //     dataObj.type + ':' +
                 //     '<br />' + 
@@ -2028,7 +2037,8 @@ async function startup()
             }
             else
             {
-                document.getElementById('overlay_entity_data').style.visibility = 'hidden';
+                // document.getElementById('overlay_entity_data').style.visibility = 'hidden';
+                document.getElementById('overlay_entity_data').setAttribute("visibility", 'hidden');
             }
         }
         else
@@ -2163,8 +2173,16 @@ function updatePreviewEntity(time, result)
                 previewDataObj.data.avgLat)
         );
 
-        document.getElementById('overlay_entity_data').style.top = wndPos.y - 75;
-        document.getElementById('overlay_entity_data').style.left = wndPos.x + 50;
+        console.log(`Changing overlay position to: ${wndPos.y - 75}, ${wndPos.x + 50}`);
+
+        var overlay = document.getElementById('overlay_entity_data');
+
+        console.log(overlay.style);
+
+        // document.getElementById('overlay_entity_data').style.top = wndPos.y - 75;
+        // document.getElementById('overlay_entity_data').style.left = wndPos.x + 50;
+        document.getElementById('overlay_entity_data').setAttribute("top", (wndPos.y - 75).toString());
+        document.getElementById('overlay_entity_data').setAttribute("left", (wndPos.x + 50).toString());
     }
 
     return description;
@@ -2180,7 +2198,7 @@ function addDisplayGroup(name, group, groupName)
 {
 
     var addToggle = false;
-    g_koPolylinelist.push({"tag": name, "name": groupName });
+    g_koPolylinelist.push({"tag": name, "name": groupName, "availability" : true });
     if(groupName)
     {
         g_displayGroups.set(groupName, group);
