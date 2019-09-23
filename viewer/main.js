@@ -49,7 +49,9 @@ function viewModel() {
         for(var i = 0; i < incomingSpatialLayers.length; i++){
             currentElement = incomingSpatialLayers[i];
             currentElement = self.convertToObservableElement(currentElement);
-            
+            if(currentElement.name == "Region meshes"){
+                currentElement.visible(false);
+            }
             self.spatialLayers_2.push(currentElement);
         }
     }
@@ -80,10 +82,10 @@ function viewModel() {
     };
 
     self.addSpatialLayer = function(layer){
-        self.spatialLayers.push( { name: layer.name, tags: layer.tags, isActive: ko.observable(true), visibility: layer.visibility, children: ko.observableArray()})
+        self.spatialLayers.push( { name: layer.name, tags: layer.tags, isActive: ko.observable(true), visible: layer.visibility, children: ko.observableArray()})
         if(layer.name =="Region meshes"){
-            self.spatialLayers()[self.spatialLayers().length-1].isActive(false);
-            spatialLayerClicked(layer.name,false);
+            self.spatialLayers[self.spatialLayers().length-1].visible(false);
+            //spatialLayerClicked(layer.name,false);
         }
     };
     self.infoLayerClick = function(parent,data){
@@ -102,7 +104,7 @@ function viewModel() {
     };
 
     self.addChildToLayer = function(tag,name){
-        console.log(tag, name);
+        //console.log(tag, name);
         var parent = self.tagExistsInLayers(tag);
         if(parent!=null) 
         {
@@ -111,7 +113,7 @@ function viewModel() {
             console.log("Did not insert child " + name + " cause tag: " + tag + " does not exist in info layers.");
         }
  
-        console.log(self.infoLayers_2());
+      //  console.log(self.infoLayers_2());
         //var layerIndex = self.getInfoLayerIndex(tag);
         //self.infoLayers()[layerIndex].children.push({"name" : name, "isActive": ko.observable(displayAtstartup), "isLocked": ko.observable(locked)});
         
