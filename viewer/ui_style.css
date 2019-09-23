@@ -157,24 +157,24 @@ li {
 }
 .groupsTable_nameCell
 {
-    width: 300px;
+    width: 280px;
 
     padding-left: 10px;
     color: #d0d0d0;
-   
+    
     user-select: none;
     border-top: 1px solid rgba(255,255,255,0.2);
 }
 .groupsTable_leafCell
 {
-    width: 300px;
-    height: 25px;
+    width: 90%;
+    height: 30px;
     padding-left: 20px;
     color: #d0d0d0;
     user-select: none;
     text-align: left;
-    border-top: 1px  solid rgba(255,255,255,0.2);
-
+    line-height:40px;
+    margin-top: 1px;
 }
 
 .groupsTable_nameCell_title
@@ -450,9 +450,10 @@ https://google.github.io/material-design-icons/
 
 .listEntryActive
 {
-    background: #bddbbe;
-    color: darkgreen ;
+    background: #A8A3A3;
+    color: #303030 ;
     font-style: bold;
+    border-radius: 10pt;
 }
 
 ul {
