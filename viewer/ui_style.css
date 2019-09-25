@@ -1,57 +1,79 @@
-body
-{
+body{
     margin: 0px;
     overflow-x: hidden;
     overflow-y: hidden;
 }
-
-#mainContainer
-{
+#mainContainer{
     width: 100vw;
     height: 100vh;
     display: flex;
     flex-direction: row;
 }
-
-.containerHeader
-{
+.containerHeader{
     color: #f0f0f0;
-    font-family: 'Questrial', sans-serif; 
+    font-family: 'Questrial', sans-serif;
     font-weight: 700;
+    height:40px;
+    line-height:40px;
 }
-
-#infoLayersContainer
-{
-    width: 300px;
-    height: 100vh;
-    /* position: fixed; */
+.sidemenu {
+    width:300px;
+    overflow-y: scroll;
+    overflow-x:hidden;
     background: #303030;
-    padding: 5 5 5 5;
+    padding-right: 15px;
+    padding-left:5px;
+    padding-top: 5px;
     color: #d0d0d0;
-    font-family: 'Questrial', sans-serif; 
+    font-family: 'Questrial', sans-serif;
+    left:2px
+}
+.sidemenu::-webkit-scrollbar {
+    width: 1em;
+}
+.sidemenu::-webkit-scrollbar-track {
+    box-shadow:inset 0 0 6px rgba(0,0,0,0.3);
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+}
+.sidemenu::-webkit-scrollbar-thumb {
+    background-color: darkgrey;
+    outline: 1px solid slategrey;
+}
+.menusection {
+    width:100%;
+    display:block;
+}
+.infoLayers_maincategory{
+    margin-left:10px;
+}
+.menusection + .menusection {
+    border-top: 2px solid white;
+}
+/*#infoLayersContainer{
+    width: 100%;
+    position: fixed;
     left: 0px;
     flex-basis: 300px;
-    flex-direction: column;
+   /* flex-direction: column;
 }
-
-.infoTable_divider
-{
+*/
+/*.infoTable_divider{
     width: 100%;
     height: 1px;
     background: #ffffff;
     display: block;
 }
-
-#cesiumContainer
-{
-    /* z-index: 1; */
-    /* height: 100vh; */
-    /* right: 0px; */
+*/
+#cesiumContainer{
+   /* z-index: 1;
+    */
+   /* height: 100vh;
+    */
+   /* right: 0px;
+    */
     width: calc(100vw - 300px);
 }
-
-#weatherReadout
-{
+#weatherReadout{
     z-index: 10;
     right: 25px;
     bottom: 50px;
@@ -66,89 +88,65 @@ body
     border-radius: 5pt;
     opacity: 0.8;
 }
-
-.weatherReadout_disabled
-{
+.weatherReadout_disabled{
     display: none;
 }
-
-#weather_readout_title
-{
+#weather_readout_title{
     font-family: Verdana, Geneva, Tahoma, sans-serif;
     font-size: 20px;
     font-weight: bold;
 }
-
-#weather_readout_description
-{
+#weather_readout_description{
     font-family: Verdana, Geneva, Tahoma, sans-serif;
     font-size: 15px;
 }
-
-#weather_readout_content
-{
+#weather_readout_content{
     font-family: Verdana, Geneva, Tahoma, sans-serif;
     font-size: 11px;
 }
-
-#groupsPanel
-{
+#groupsPanel{
     z-index: 10;
     left: 10px;
     top: 25%;
-    /*bottom: 200px;*/
+   /*bottom: 200px;
+   */
     width: 350px;
-    /* max-height: 500px; */
+   /* max-height: 500px;
+    */
     position: fixed;
     background: #303030;
     padding: 5 5 5 5;
     color: #d0d0d0;
-    font-family: 'Questrial', sans-serif; 
+    font-family: 'Questrial', sans-serif;
     border-radius: 5pt;
     opacity: 0.8;
 }
-
 /* 20190912 - moved to groupsContainer now */
-#groupsTable
-{
-    overflow-y: scroll;
-    overflow-x: hidden;
-    /* max-height: 350px; */
+/*#groupsTable{
+   /* max-height: 350px;
     max-height: 60vh;
     display: block;
 }
-
-#groupsContainer
-{
-    overflow-y: scroll;
-    overflow-x: hidden;
-    /* max-height: 350px; */
+*/
+/*#groupsContainer{
+   /* max-height: 350px;
     height: 50vh;
     max-height: 50vh;
     display: block;
     font-family: 'Questrial', sans-serif;
 }
-
-.groupsTable_grpCell
-{
+*/
+.groupsTable_grpCell{
     width: 100%;
-    height: 28px;
-    /* color: #d0d0d0; */
+   /* color: #d0d0d0;
+    */
     color: #f0f0f0;
     text-align: left;
     user-select: none;
     font-weight: 700;
 }
-
-.infoLayers_maincategory
-{
-
-    border-top: 1.5px solid rgba(255,255,255,0.2);
-}
-.groupsTable_cbCell
-{
+.groupsTable_cbCell{
     width: 50px;
-    height: 25px;
     color: #d0d0d0;
     text-align: left;
     user-select: none;
@@ -156,159 +154,117 @@ body
 li {
     list-style-type:none
 }
-.groupsTable_nameCell
-{
-    width: 280px;
-
-    padding-left: 10px;
+.groupsTable_nameCell{
+    margin-left: 15px;
     color: #d0d0d0;
-    
+    padding-bottom:5px;
     user-select: none;
-    border-top: 1px solid rgba(255,255,255,0.2);
 }
-.groupsTable_leafCell
-{
+.groupsTable_nameCell + .groupsTable_nameCell {
+    border-top: 1px double rgba(255,255,255,0.2);
+}
+.groupsTable_leafCell{
     width: 90%;
-    height: 30px;
-    padding-left: 20px;
+    margin-left:15px;
     color: #d0d0d0;
     user-select: none;
-    text-align: left;
+    text-align: center;
     line-height:40px;
     margin-top: 1px;
     font-weight: 400;
 }
-
-.groupsTable_leafCell:hover
-{
+.groupsTable_leafCell:hover{
     font-weight: 800;
     color: #f0f0f0;
 }
-
-.groupsTable_nameCell_title
-{
+.groupsTable_nameCell_title{
     width: 300px;
     color: #d0d0d0;
     font-family: 'Questrial', sans-serif;
 }
-
-.groupsTable_nameCell:hover
-{
+.groupsTable_nameCell:hover{
     font-weight: bold;
 }
-
-.groupsTable_toggleBtn
-{
+.groupsTable_toggleBtn{
     width: 48px;
     height: 23px;
     background: #484048;
     color: #d0d0d0;
     border-width: 0px;
 }
-
-.groupsTable_toggleBtn_small
-{
+.groupsTable_toggleBtn_small{
     width: 24px;
     height: 23px;
     background: #303030;
     border-width: 0px;
     font-size: 16px !important;
 }
-
-.groupsTable_toggleBtn_small:focus
-{
+.groupsTable_toggleBtn_small:focus{
     outline: none;
 }
-
-.groupsTable_toggleBtn_active
-{
+.groupsTable_toggleBtn_active{
     color: #d0d0d0;
 }
-
-.groupsTable_toggleBtn_inactive
-{
+.groupsTable_toggleBtn_inactive{
     color: #505050;
 }
-
 /* sites selector */
-#sitesTable
-{
-   overflow-y: scroll;
-    overflow-x: hidden;
-    /* max-height: 350px; */
-    height: 20vh;
-    max-height: 20vh;
+#sitesTable{
+   /* max-height: 350px;
+    */
     display: block;
 }
-
-#sitesSelector
-{
+/*#sitesSelector{
     -webkit-appearance: none;
     width: 100%;
     height: 25px;
-    /* background: #383038; */
-    
+   /* background: #383038;
     color: #d0d0d0;
-    font-family: 'Questrial', sans-serif;  
+    font-family: 'Questrial', sans-serif;
     user-select: none;
 }
-
-.siteList
-{
+*/
+.siteList{
     padding-inline-start: 0px;
 }
-
-.siteList:hover
-{
+.siteList:hover{
     cursor: default;
 }
-
-.siteList_cityname
-{
+.siteList_cityname{
     font-weight: 800;
 }
-
-.siteList_sitename
-{
+.siteList_sitename{
     font-weight: 400;
     font-size: 11pt;
 }
-
-.siteList_sitename:hover
-{
+.siteList_sitename:hover{
     font-weight: bold;
     cursor: pointer;
 }
-
 /* data layers selector */
-#layersTable
-{
+/*#layersTable{
     overflow-y: auto;
     overflow-x: hidden;
-    /* max-height: 350px; */
+   /* max-height: 350px;
     height: 20vh;
     max-height: 20vh;
     display: block;
 }
-
-.groupsTable_siteSelector_main
-{
+*/
+/*.groupsTable_siteSelector_main{
     width: 275px;
     height: 25px;
     color: #d0d0d0;
-    font-family: 'Questrial', sans-serif;    
+    font-family: 'Questrial', sans-serif;
 }
-
-.groupsTable_siteSelector_icon
-{
+.groupsTable_siteSelector_icon{
     width: 25px;
     height: 25px;
     color: #d0d0d0;
-    font-family: 'Questrial', sans-serif;    
+    font-family: 'Questrial', sans-serif;
 }
-
-#loaderProgressDisplay
-{
+*/
+#loaderProgressDisplay{
     z-index: 11;
     bottom: 240px;
     width: 400px;
@@ -319,25 +275,21 @@ li {
     margin: auto auto;
     background: #383038;
     border-radius: 5pt;
-    
-}    
-
-.progressHeader
-{
+}
+.progressHeader{
     color: #d0d0d0;
     font-family: 'Questrial', sans-serif;
     font-size: 32pt;
     font-weight: 800;
     text-align: center;
-    /* display: inline-block; */
+   /* display: inline-block;
+    */
     position: absolute;
     vertical-align: middle;
     width: 100%;
     height: 100%;
 }
-
-#loaderProgressBar
-{
+#loaderProgressBar{
     z-index: 12;
     width: 0%;
     height: 10px;
@@ -346,29 +298,21 @@ li {
     position: absolute;
     background: #d0d0d0;
 }
-
-/* from Google for Material Icons font:
-
-https://google.github.io/material-design-icons/
-
-*/
+/* from Google for Material Icons font: https://google.github.io/material-design-icons/ */
 @font-face {
     font-family: 'Material Icons';
     font-style: normal;
     font-weight: 400;
-    src: url(../assets/fonts/MaterialIcons-Regular.eot); /* For IE6-8 */
-    src: local('Material Icons'),
-      local('MaterialIcons-Regular'),
-      url(../assets/fonts/MaterialIcons-Regular.woff2) format('woff2'),
-      url(../assets/fonts/MaterialIcons-Regular.woff) format('woff'),
-      url(../assets/fonts/MaterialIcons-Regular.ttf) format('truetype');
-  }
-
+    src: url(../assets/fonts/MaterialIcons-Regular.eot);
+   /* For IE6-8 */
+    src: local('Material Icons'), local('MaterialIcons-Regular'), url(../assets/fonts/MaterialIcons-Regular.woff2) format('woff2'), url(../assets/fonts/MaterialIcons-Regular.woff) format('woff'), url(../assets/fonts/MaterialIcons-Regular.ttf) format('truetype');
+}
 .material-icons {
     font-family: 'Material Icons';
     font-weight: normal;
     font-style: normal;
-    font-size: 24px;  /* Preferred icon size */
+    font-size: 24px;
+   /* Preferred icon size */
     display: inline-block;
     line-height: 1;
     text-transform: none;
@@ -376,21 +320,16 @@ https://google.github.io/material-design-icons/
     word-wrap: normal;
     white-space: nowrap;
     direction: ltr;
-  
-    /* Support for all WebKit browsers. */
+   /* Support for all WebKit browsers. */
     -webkit-font-smoothing: antialiased;
-    /* Support for Safari and Chrome. */
+   /* Support for Safari and Chrome. */
     text-rendering: optimizeLegibility;
-  
-    /* Support for Firefox. */
+   /* Support for Firefox. */
     -moz-osx-font-smoothing: grayscale;
-  
-    /* Support for IE. */
+   /* Support for IE. */
     font-feature-settings: 'liga';
-  }
-
-#overlay_entity_data
-{
+}
+#overlay_entity_data{
     width: 200px;
     height: 200px;
     background-color: #303030;
@@ -400,84 +339,66 @@ https://google.github.io/material-design-icons/
     left: 250px;
     visibility: hidden;
 }
-
-#overlay_entity_header
-{
+#overlay_entity_header{
     color: darkseagreen;
-    font-family: 'Questrial', sans-serif; 
+    font-family: 'Questrial', sans-serif;
     font-weight: 800;
 }
-
-.overlay_entity_fieldname
-{
+.overlay_entity_fieldname{
     color: #d0d0d0;
-    font-family: 'Questrial', sans-serif;    
+    font-family: 'Questrial', sans-serif;
     font-weight: 600;
 }
-
-.overlay_entity_value
-{
+.overlay_entity_value{
     color: #d0d0d0;
-    font-family: 'Questrial', sans-serif;    
+    font-family: 'Questrial', sans-serif;
 }
-
-.interventionSelector
-{
+.interventionSelector{
     display:flex;
     justify-content: space-between;
     padding-right:15px;
     margin-top:5px;
     margin-bottom:5px;
 }
-
-.legend_header
-{
+.legend_header{
     color: darkseagreen;
-    font-family: 'Questrial', sans-serif; 
+    font-family: 'Questrial', sans-serif;
     font-weight: 800;
-    font-size: 18px;    
+    font-size: 18px;
 }
-
-.survey_legend_container
-{
+.survey_legend_container{
     z-index: 12;
     right: 10px;
     top: 150px;
-    /*bottom: 200px;*/
+   /*bottom: 200px;
+   */
     width: 350px;
-    /* max-height: 500px; */
+   /* max-height: 500px;
+    */
     position: fixed;
     background: #303030;
     padding: 5 5 5 5;
     color: #d0d0d0;
-    font-family: 'Questrial', sans-serif; 
+    font-family: 'Questrial', sans-serif;
     border-radius: 5pt;
     opacity: 0.8;
 }
-
-.survey_legend_header_main
-{
+.survey_legend_header_main{
     color: darkseagreen;
-    font-family: 'Questrial', sans-serif; 
+    font-family: 'Questrial', sans-serif;
     font-weight: 800;
-    font-size: 18px;  
+    font-size: 18px;
 }
-
-.survey_legend_header_content
-{
-    font-family: 'Questrial', sans-serif; 
+.survey_legend_header_content{
+    font-family: 'Questrial', sans-serif;
     font-weight: 800;
-    font-size: 18px;  
+    font-size: 18px;
 }
-
-.survey_legend_description
-{
+.survey_legend_description{
     font-style: italic;
     font-weight: 400;
 }
-
-.toggleButton 
-{
+.toggleButton {
     width:45%;
     height:30px;
     border: 1px solid white;
@@ -486,47 +407,61 @@ https://google.github.io/material-design-icons/
     text-align: center;
     cursor: default;
 }
-
-.buttonActive 
-{
+.buttonActive {
     background:#bddbbe;
     color: #303030;
     border-color:white;
 }
-
-.listEntryActive
-{
+.listEntryActive{
     background: #A8A3A3;
     color: #303030 ;
     font-style: bold;
     border-radius: 10pt;
 }
-
 ul {
-  padding: 0;
-  width: 300px;
+    padding: 0;
 }
-
 /* List element */
 li {
-  align-items: left;
-  box-sizing: border-box;
+    align-items: left;
+    box-sizing: border-box;
 }
-.groupsTable_grpCell + .groupsTable_nameCell {
-  border-top: 1px solid rgba(255,255,255,0.2);
-}
-
 .canHaveLock {
     display:flex;
 }
-
 .readable {
     line-height:25px;
     font-family: 'Questrial', sans-serif;
     font-size: 12pt;
+    padding-left:15px;
 }
-
 .notClickable {
     pointer-events: none;
-
+}
+.caret {
+    cursor: pointer;
+    user-select: none;
+   /* Prevent text selection */
+}
+/* Create the caret/arrow with a unicode, and style it */
+.caret::before {
+    content: "\25B6";
+    color: white;
+    display: inline-block;
+    margin-right: 3px;
+    font-size:12px;
+    line-height:24px;
+    vertical-align:middle;
+}
+/* Rotate the caret/arrow icon when clicked on (using JavaScript) */
+.caret-down::before {
+    transform: rotate(90deg);
+}
+/* Hide the nested list */
+.nested {
+    display: none;
+}
+/* Show the nested list when the user clicks on the caret/arrow (with JavaScript) */
+.active {
+    display: block;
 }

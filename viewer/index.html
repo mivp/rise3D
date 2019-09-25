@@ -26,13 +26,12 @@
 <body onload="startup()">
     <!-- <div id="cesiumContainer" style="width: 1920px; height: 1080px"></div> -->
     <div id="mainContainer">
-        <div id="infoLayersContainer">
+        <div class="sidemenu">
+        <div class="menusection" id="infoLayersContainer">
             <span class="containerHeader">info layers</span>
-            <br />
-            <br />
 
             <!-- groupsTable lists information layers and toggles data visibility -->
-            <div id="groupsContainer">
+     
                 <div id="ko_groupsContainer">
                     <div class="groupsTable_grpCell" data-bind="foreach: infoLayers_2">
                         <div class="infoLayers_maincategory" data-bind="'notClickable': isLocked || children.length>0" >
@@ -62,21 +61,19 @@
                         </div>
                     </div>
                 </div>
-
-            </div>
-            <br />
-            <div class="infoTable_divider"></div>
+        </div>
             <!-- sitesTable lists project sites and provides quick jump-to-location -->
-            <div id='sitesTable'>
+        <div class="menusection" id='sitesTable'>
                 <span class="containerHeader">site browser</span>
                 <!--  <table id="sitesTable">
                     <tr> -->
                 <div class="interventionSelector" data-bind="foreach: toggleButtons">
                     <!-- 2 buttons which are togglable -->
-                    <div class="toggleButton" data-bind="click: $parent.toggleActive, css: {'buttonActive': isActive}"><span data-bind='text: name'></span> </div>
-
+                    <div class="toggleButton" data-bind="click: $parent.toggleActive, css: {'buttonActive': isActive}">
+                        <span data-bind='text: name'></span> 
+                    </div>
                 </div>
-                <div id="ko_sitlistContainer">
+                <div id="ko_sitelistContainer">
                     <ul class="siteList" data-bind="foreach: siteList_cities">
                         <li class="infoLayers_maincategory">
                             <span data-bind='text: name'></span>
@@ -89,11 +86,10 @@
 
                     </ul>
                 </div>
-
-                <br />
-            </div>
-            <div class="infoTable_divider"></div>
+        </div>
+     
             <!-- sitesTable lists spatial elements and toggles their visibility -->
+        <div class="menusection">
             <span class="containerHeader">backgrounds</span>
             <div id="ko_spatialLayersContainer">
                 <ul class="groupsTable_grpCell" data-bind="foreach: spatialLayers_2">
@@ -104,8 +100,9 @@
                 </ul>
             </div>
         </div>
-
-        <div id="cesiumContainer"></div>
+    </div>
+</div>
+    <div id="cesiumContainer"></div>
     </div>
     <div id="loaderProgressDisplay">
         <span class="progressHeader">
