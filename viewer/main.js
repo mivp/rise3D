@@ -1883,7 +1883,9 @@ async function startup()
             // 'vrButton' : true    // cardboard (not webVR) mode switch button
             timeline: true,
             animation: false,
-            homeButton: false
+            homeButton: false,
+            baseLayerPicker: false, // 20190925 - base layer picker disabled for now, until/unless imagery layers need to be selectable,
+            imageryProvider: false  // 20190925 - start with no imagery layer, to avoid creating a Bing maps session
         }
     );
 
