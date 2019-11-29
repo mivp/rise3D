@@ -624,19 +624,66 @@ function loadMesh(description)
         console.log("Loading mesh file: " + new URL(description.path, window.location.href));
 
         var modelMatrix;
+        var ECEFinput = false;
+        var useComputedMatrix = false;
 
-        if(description.position.x > 100000)
+        if('ecef' in description.position && description.position.ecef)
         {
-            var deg = toLatLon(description.position.x, description.position.y, 50, 'M');
+            // var origin = new Cesium.Cartesian3(description.position.y, description.position.x, description.position.z);
+            // modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin);
+
+            var wgs = unproject(description.position.x, description.position.y, description.position.z);
+            var origin = Cesium.Cartesian3.fromDegrees(wgs[0], wgs[1]);
+
+            // var deg = toLatLon(description.position.x, description.position.y, 1, 'S');
+            // var origin = Cesium.Cartesian3.fromDegrees(deg.longitude, deg.latitude);
+            modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin);
+
+            Cesium.Matrix4.multiply(modelMatrix, Cesium.Matrix4.fromTranslationQuaternionRotationScale(
+                new Cesium.Cartesian3(description.transform.translation.x, description.transform.translation.y, description.transform.translation.z),
+                new Cesium.Quaternion.fromHeadingPitchRoll(new Cesium.HeadingPitchRoll(Math.PI * (description.transform.orientation.y / 180), Math.PI * (description.transform.orientation.x / 180), Math.PI * (description.transform.orientation.z / 180))),
+                new Cesium.Cartesian3(description.transform.scale.x, description.transform.scale.y, description.transform.scale.z)),
+                modelMatrix);
+
+            ECEFinput = true;
+        }
+        else if(Math.abs(description.position.x) > 180)
+        {
+            var zone = 50, band = 'M';
+            
+            if(description.utm)
+            {
+                zone = description.utm.zone.toString();
+                band = description.utm.band;
+            }
+
+            // var deg = toLatLon(description.position.x, description.position.y, 50, 'M');
+            var deg = toLatLon(description.position.x, description.position.y, zone, band);
 
             var origin = Cesium.Cartesian3.fromDegrees(deg.longitude, deg.latitude);
-            var modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin);
+            // var modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin);
+            // Cesium.Matrix4.multiplyByTranslation(modelMatrix, new Cesium.Cartesian3(0, 1, 0), modelMatrix);
+            modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin);
+            Cesium.Matrix4.multiply(modelMatrix, Cesium.Matrix4.fromTranslationQuaternionRotationScale(
+                new Cesium.Cartesian3(description.transform.translation.x, description.transform.translation.y, description.transform.translation.z),
+                new Cesium.Quaternion.fromHeadingPitchRoll(new Cesium.HeadingPitchRoll(Math.PI * (description.transform.orientation.y / 180), Math.PI * (description.transform.orientation.x / 180), Math.PI * (description.transform.orientation.z / 180))),
+                new Cesium.Cartesian3(description.transform.scale.x, description.transform.scale.y, description.transform.scale.z)),
+                modelMatrix);
+        }
+        else if(Math.abs(description.position.x) > 0.1)
+        {
+            var origin = Cesium.Cartesian3.fromDegrees(description.position.x, description.position.y);
+            modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin);
+            // modelMatrix = Cesium.Transforms.LocalFrameToFixedFrame(origin, Cesium.Ellipsoid.WGS84, modelMatrix);
+            // modelMatrix = g(origin);
             // Cesium.Matrix4.multiplyByTranslation(modelMatrix, new Cesium.Cartesian3(0, 1, 0), modelMatrix);
             Cesium.Matrix4.multiply(modelMatrix, Cesium.Matrix4.fromTranslationQuaternionRotationScale(
                 new Cesium.Cartesian3(description.transform.translation.x, description.transform.translation.y, description.transform.translation.z),
                 new Cesium.Quaternion.fromHeadingPitchRoll(new Cesium.HeadingPitchRoll(Math.PI * (description.transform.orientation.y / 180), Math.PI * (description.transform.orientation.x / 180), Math.PI * (description.transform.orientation.z / 180))),
                 new Cesium.Cartesian3(description.transform.scale.x, description.transform.scale.y, description.transform.scale.z)),
                 modelMatrix);
+
+            useComputedMatrix = true;   // change this, it's not true :)
         }
 
         // early grouping work, just create an entity group for each entity
@@ -649,8 +696,10 @@ function loadMesh(description)
             showDefault = description.showDefault;
         }
 
-        if('matrix' in description)
+        if(!useComputedMatrix && 'matrix' in description)
         {
+            console.log("Using matrix provided in description");
+
             // var matrix = new Cesium.Matrix4(description.matrix);
             var matrix = Cesium.Matrix4.fromRowMajorArray(description.matrix);
 
@@ -664,11 +713,21 @@ function loadMesh(description)
 
             var primitive = viewer.scene.primitives.add(model);
         }
-        else if(description.position.x > 100000)
+        else if(description.position.x > 100000 || useComputedMatrix)
         {
-            // var model = Cesium.Model.fromGltf({
+            var resourcePath = "../assets/meshes";
+            if(description.resourcepath)
+            {
+                resourcePath = description.resourcepath;
+            }
+
+            console.log("Using matrix combined from description and position data");
+            console.log("Resource path: " + new URL(resourcePath, window.location.href));
+
             model = Cesium.Model.fromGltf({
-                    url: description.path,
+                url: description.path,
+                basePath: new URL(resourcePath, window.location.href) + "/",
+                // asynchronous: false,
                 // scale: 0.05,
                 show: showDefault,
                 modelMatrix: modelMatrix,
@@ -676,6 +735,33 @@ function loadMesh(description)
             });
 
             var primitive = viewer.scene.primitives.add(model);
+
+            Cesium.when(model.readyPromise).then(function(model)
+            {
+                console.log("Finished loading model: " + description.path);
+            }).otherwise(function(e)
+            {
+                console.log("Failed to load model " + description.path + ": " + e)
+            });
+
+            /*
+            // var model = Cesium.Model.fromGltf({
+            model = Cesium.Model.fromGltf({
+                    url: description.path,
+                    basePath: new URL(resourcePath, window.location.href),
+                    // asynchronous: false,
+                    // scale: 0.05,
+                show: showDefault,
+                modelMatrix: modelMatrix,
+                allowPicking: true
+            });
+
+            // model = viewer.entities.add({
+            //     model: model
+            // });
+
+            var primitive = viewer.scene.primitives.add(model);
+            */
         }
         else
         {
@@ -1875,15 +1961,40 @@ async function startup()
     ko_viewModel = new viewModel();
     ko.applyBindings(ko_viewModel);
    // ko.applyBindings(ko_viewModel);
-    // create a Cesium viewer and load Earth data
-    
+
+    // show the intro page and register an event to remove it
+    // document.getElementById("fadeLayer").addEventListener("click", (e) => {
+
+    [document.getElementById("fadeLayer"), document.getElementById("btn_dismissIntro")].map(el => {
+        console.log("found element, adding event listener");
+
+        let trg = el;
+
+        el.addEventListener("click", (e) => {
+            if(e.target != trg)
+            {
+                return;
+            }
+
+            document.getElementById("fadeLayer").style.display = 'none';
+        });
+
+        return el;
+    }, this);
+
+    document.getElementById("btn_contact_rise").addEventListener("click", (e) => {
+        document.getElementById("fadeLayer").style.display = 'block';
+    });
+
+   // create a Cesium viewer and load Earth data
+
     Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0ZDgyMmRiYS0zMjMyLTQxMzMtYTNiMC05ZmZiZTRkZWQ2YTQiLCJpZCI6ODMyMywic2NvcGVzIjpbImFzciIsImdjIl0sImlhdCI6MTU1MTc1MzAzNX0.wDKGdaNCaseIbASuOFeSRdXF-Ch4uGfMQdeVBKTCzNU';
 
     viewer = new Cesium.Viewer('cesiumContainer', 
         {
             // 'vrButton' : true    // cardboard (not webVR) mode switch button
             timeline: true,
-            animation: false,
+            // animation: false,
             homeButton: false,
             baseLayerPicker: false, // 20190925 - base layer picker disabled for now, until/unless imagery layers need to be selectable,
             imageryProvider: false  // 20190925 - start with no imagery layer, to avoid creating a Bing maps session
@@ -1946,11 +2057,13 @@ async function startup()
     }
 
     document.getElementById('loaderProgressDisplay').style.display = 'none';
+    document.getElementById('btn_dismissIntro').textContent = "Close";
+    document.getElementById('btn_dismissIntro').classList.add('buttonActive');
     
     // merge all timesteps together
     g_timeIntervals = new Cesium.TimeIntervalCollection();
     console.log('Combining time interval collections, count: ' + g_intervalGroups.size);
-/*uncommentfor fastNH
+///*uncommentfor fastNH
     for(var collection of g_intervalGroups.values())
     {
         console.log('Adding time interval collection, length: ' + collection.length);
@@ -1983,7 +2096,7 @@ async function startup()
 
     // look at the default element, this should be selected as part of the loading process
     viewer.zoomTo(g_defaultElement);
-   */
+//   */
     // init any callbacks
     // 20190911 - replaced by events for each site header
     // var selector = document.getElementById("sitesSelector");

@@ -1,0 +1,7 @@
+// modified by DW 25/10/2019
+const wgs84 = Object.freeze({
+    RADIUS: 6378137,
+    FLATTENING_DENOM: 298.257223563,
+    FLATTENING: 1/this.FLATTENING_DENOM,
+    POLAR_RADIUS: this.RADIUS*(1-this.FLATTENING)
+});

@@ -264,6 +264,116 @@ li {
     font-family: 'Questrial', sans-serif;
 }
 */
+#fadeLayer
+{
+    z-index: 10;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    top: 0;
+    left: 0;
+    position: fixed;
+    display: block;
+}
+
+#introPanel
+{
+    z-index: 11;
+    width: 480px;
+    height: 320px;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    position: absolute;
+    /* margin: auto auto; */
+    margin: auto;
+    background: #383038;
+    border-radius: 5pt;
+    text-align: center;
+    padding: 20px;
+}
+
+.intro_header
+{
+    color: yellowgreen;
+    font-family: 'Questrial', sans-serif;
+    font-weight: 800;
+    font-size: 36px;
+}
+
+.intro_subheader
+{
+    color: darkseagreen;
+    font-family: 'Questrial', sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.intro_subheader_small
+{
+    color: darkseagreen;
+    font-family: 'Questrial', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.intro_content
+{
+    color: blanchedalmond;
+    font-family: 'Questrial', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+}
+
+.content_icon
+{
+    font-family: 'Material Icons';
+}
+
+.intro_link
+{
+    color: blanchedalmond;
+}
+
+.intro_button
+{
+    width:120px;
+    font-family: 'Questrial', sans-serif;
+    font-weight: 800;
+    height:30px;
+    border: 1px solid white;
+    border-radius:5px;
+    line-height: 30px;
+    text-align: center;
+    cursor: default;
+    background: #d0d0d0;
+    color: #808080;
+
+    /* background:#bddbbe;
+    color: #303030;
+    border-color:white; */
+}
+
+#contactContainer
+{
+    width: 50px;
+    height: 50px;
+    top: 50px;
+    right: 5px;
+    position: fixed;
+}
+
+#btn_contact_rise
+{
+    background:#bddbbe;
+    color: #303030;
+    border-color:white;
+    font-family: 'Material Icons';
+    font-size: 24px;
+    border-radius: 5pt;
+}
+
 #loaderProgressDisplay{
     z-index: 11;
     bottom: 240px;
