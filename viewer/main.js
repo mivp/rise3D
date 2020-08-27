@@ -216,6 +216,9 @@ var g_intervalGroups = new Map();   // used for storing intervals as data is loa
 
 var g_objToSrcMap = new Map();  // Cesium object IDs and references to data sources
 
+// global debug stuff for testing
+var testingElement = null;
+
 // object references
 var viewer = null;
 var previewEntity = null;
@@ -364,11 +367,19 @@ function loadElement(description)
             g_defaultElement = element;
         }
 
+        var groupPrefix = "";
+
         if(description.datatype == "points")
         {
             element.style = new Cesium.Cesium3DTileStyle({
                 "pointSize" : "3.0"
             });
+
+            groupPrefix = "points_";
+        }
+        else if(description.datatype == "mesh")
+        {
+            groupPrefix = "mesh_";
         }
 
         // early grouping work, just create an entity group for each entity
@@ -376,6 +387,100 @@ function loadElement(description)
 
         // element.allTilesLoaded.addEventListener(function() {
         element.readyPromise.then(function(element){
+
+            // element.debugShowBoundingVolume = true;
+            // element.debugShowContentBoundingVolume = true;
+            // element.debugShowGeometricError = true;
+            
+            // element.dynamicScreenSpaceError = true;
+
+            // if transform properties are set in the scene data file, apply to the tileset root after loading
+            if(description.transform != undefined)
+            {
+                var zone = 50, band = 'M';
+            
+                if(description.utm)
+                {
+                    zone = description.utm.zone.toString();
+                    band = description.utm.band;
+                }
+   
+                // var deg = toLatLon(description.position.x, description.position.y, 50, 'M');
+                var deg = toLatLon(description.position.x, description.position.y, zone, band);
+    
+                var origin = Cesium.Cartesian3.fromDegrees(deg.longitude, deg.latitude);
+
+                // var origin = Cesium.Cartesian3.fromDegrees(description.position.x, description.position.y);
+                modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin);
+                // modelMatrix = Cesium.Transforms.LocalFrameToFixedFrame(origin, Cesium.Ellipsoid.WGS84, modelMatrix);
+                // modelMatrix = g(origin);
+                // Cesium.Matrix4.multiplyByTranslation(modelMatrix, new Cesium.Cartesian3(0, 1, 0), modelMatrix);
+                Cesium.Matrix4.multiply(modelMatrix, Cesium.Matrix4.fromTranslationQuaternionRotationScale(
+                    new Cesium.Cartesian3(description.transform.translation.x, description.transform.translation.y, description.transform.translation.z),
+                    new Cesium.Quaternion.fromHeadingPitchRoll(new Cesium.HeadingPitchRoll(Math.PI * (description.transform.orientation.y / 180), Math.PI * (description.transform.orientation.x / 180), Math.PI * (description.transform.orientation.z / 180))),
+                    new Cesium.Cartesian3(description.transform.scale.x, description.transform.scale.y, description.transform.scale.z)),
+                    modelMatrix);
+
+                useComputedMatrix = true;   // change this, it's not true :)
+                console.log('Using matrix for tileset:');
+                console.log(modelMatrix);
+            
+                /* works with tilesets that have 'transform' property
+                var transform = Cesium.Matrix4.fromRowMajorArray(description.transform, new Cesium.Matrix4());
+                Cesium.Matrix4.multiply(element.root.transform, transform, element.root.transform);
+                console.log("Applied transform to root tile of tileset");
+                */
+
+                element.root.transform = modelMatrix;
+            }
+
+            // if(description.position != undefined)
+            // {
+            //     element.root.transform = Cesium.Matrix4.fromTranslation(new Cesium.Cartesian3(description.position[0], description.position[1], description.position[2]));
+            // }
+
+            var targetRotation = Cesium.Quaternion.clone(Cesium.Quaternion.IDENTITY, new Cesium.Quaternion());
+            var targetTranslation = new Cesium.Cartesian3(0, 0, 0);
+            var targetScale = new Cesium.Cartesian3(1, 1, 1);
+            var applyTransform = false;
+
+            if(description.orientation != undefined)
+            {
+                // // is this really necessary aargh
+                // var xRot = Cesium.Quaternion.fromAxisAngle(new Cesium.Cartesian3(1, 0, 0), Math.PI * (description.orientation[0] / 180.0));
+                // var yRot = Cesium.Quaternion.fromAxisAngle(new Cesium.Cartesian3(0, 1, 0), Math.PI * (description.orientation[1] / 180.0));
+                // var zRot = Cesium.Quaternion.fromAxisAngle(new Cesium.Cartesian3(0, 0, 1), Math.PI * (description.orientation[2] / 180.0));
+                // var rot = Cesium.Quaternion.clone(xRot);
+                // rot = Cesium.Quaternion.multiply(rot, yRot);
+                // rot = Cesium.Quaternion.multiply(rot, zRot);
+
+                var hpr = Cesium.HeadingPitchRoll.fromDegrees(-description.orientation.z, -description.orientation.y, description.orientation.x, new Cesium.HeadingPitchRoll());
+                // hpr = new Cesium.HeadingPitchRoll(Math.PI * (-description.orientation[2] / 180.0), Math.PI * (-description.orientation[1] / 180.0), Math.PI * (-description.orientation[0] / 180.0));
+                targetRotation = Cesium.Quaternion.fromHeadingPitchRoll(hpr, new Cesium.Quaternion());
+                applyTransform = true;
+            }
+
+            if(description.position != undefined)
+            {
+                targetTranslation = new Cesium.Cartesian3(description.position.x, description.position.y, description.position.z);
+                applyTransform = true;
+            }
+            
+            if(applyTransform)
+            {
+                var transform = new Cesium.Matrix4();
+
+                transform = Cesium.Matrix4.fromTranslationQuaternionRotationScale(targetTranslation, targetRotation, targetScale, new Cesium.Matrix4());
+                // element.root.transform = transform;
+                Cesium.Matrix4.multiply(element.root.transform, transform, element.root.transform);
+            }
+
+            var nameindex = element._url.indexOf('lempangang');
+            if(nameindex >= 0)
+            {
+                testingElement = element;
+            }
+
             var name = description.name;
             var caption = (description.caption != undefined ? description.caption : description.name);
 
@@ -416,7 +521,7 @@ function loadElement(description)
                 addDisplayGroup(tag, element);
             }
 
-            var dataObj = new DataEntity("points_" + description.name);
+            var dataObj = new DataEntity(groupPrefix + description.name);
             dataObj.type = EntityType.PointCloud;
             dataObj.data = {
                 name : description.name,
@@ -425,7 +530,9 @@ function loadElement(description)
     
             // element.id = dataObj; // TODO: this isn't 100% consistent, need to make all objects reference data entities or have an ID that can be looked up, preferably not a mix of both :)
     
-            g_objToSrcMap.set("points_" + description.name, dataObj);
+            g_objToSrcMap.set(groupPrefix + description.name, dataObj);
+
+            console.log('Finished loading descriptor for 3D Tiles tileset ' + element.name);
         });    
 
         resolve();
@@ -495,6 +602,14 @@ function loadKML(description)
             if(ent.polygon !== undefined)
             {
                 ent.polygon.outlineWidth = 3.0;
+            }
+
+            console.log(ent);
+
+            // 20200825 - trying to hide KML markers
+            if(ent.billboard !== undefined)
+            {
+                ent.billboard = undefined;
             }
         }
 
@@ -610,7 +725,8 @@ function onSiteClick(evt){
                     if(entity != null)
                     {
                         // viewer.zoomTo(entity);
-                        viewer.zoomTo(entity.data.source);
+                        var hpr = new Cesium.HeadingPitchRange(0, -Cesium.Math.PI_OVER_TWO, 500);
+                        viewer.zoomTo(entity.data.source, hpr); // 20200824 - don't zoom in so close when jumping to sites
                         break;
                     }
                 }  
@@ -627,7 +743,7 @@ function loadMesh(description)
         var ECEFinput = false;
         var useComputedMatrix = false;
 
-        if('ecef' in description.position && description.position.ecef)
+        if(description.position && 'ecef' in description.position && description.position.ecef)
         {
             // var origin = new Cesium.Cartesian3(description.position.y, description.position.x, description.position.z);
             // modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin);
@@ -647,7 +763,7 @@ function loadMesh(description)
 
             ECEFinput = true;
         }
-        else if(Math.abs(description.position.x) > 180)
+        else if(description.position && Math.abs(description.position.x) > 180)
         {
             var zone = 50, band = 'M';
             
@@ -670,7 +786,7 @@ function loadMesh(description)
                 new Cesium.Cartesian3(description.transform.scale.x, description.transform.scale.y, description.transform.scale.z)),
                 modelMatrix);
         }
-        else if(Math.abs(description.position.x) > 0.1)
+        else if(description.position && Math.abs(description.position.x) > 0.1)
         {
             var origin = Cesium.Cartesian3.fromDegrees(description.position.x, description.position.y);
             modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin);
@@ -713,7 +829,7 @@ function loadMesh(description)
 
             var primitive = viewer.scene.primitives.add(model);
         }
-        else if(description.position.x > 100000 || useComputedMatrix)
+        else if(description.position && description.position.x > 100000 || useComputedMatrix)
         {
             var resourcePath = "../assets/meshes";
             if(description.resourcepath)
@@ -782,6 +898,14 @@ function loadMesh(description)
                 show: showDefault,
                 allowPicking: true
             });
+
+            Cesium.when(model.readyPromise).then(function(model)
+            {
+                console.log("Finished loading model: " + description.path);
+            }).otherwise(function(e)
+            {
+                console.log("Failed to load model " + description.path + ": " + e)
+            });            
 
             var primitive = viewer.scene.primitives.add(model);            
         }
@@ -946,9 +1070,9 @@ async function processHygrodataSummary(description, filenames, datapath, sourceE
     // addDisplayGroup(sourceElement.name + "(" + sourceElement.datatype + ")", grp);// 20190911 - was working for individual elements, replacing with tags
     for(var tag of sourceElement.tags)
     {
-        addDisplayGroup(tag, grp);
+        var name = sourceElement.name;  // 20200306 - these display groups weren't toggling properly
+        addDisplayGroup(tag, grp, sourceElement.name);
     }
-
 }
 
 // FIXME: currently storing a reference to each updatable marker here, really should have a dedicated structure and search feature for this
@@ -1068,7 +1192,8 @@ function loadOrthophoto(description)
     // early grouping work, just create an entity group for each entity
     // var grp = new Cesium.EntityCollection();
  
-    var tms = Cesium.createTileMapServiceImageryProvider({
+    // var tms = Cesium.createTileMapServiceImageryProvider({   // function was removed from Cesium at some point after 1.62
+    var tms = new Cesium.TileMapServiceImageryProvider({
         url : description.path,
         fileExtension: 'png'
         // maximumLevel: 10
@@ -1322,6 +1447,12 @@ function processMarkerData(description, sourceElement)
 
     var i = 0;
 
+    if(geometry.markers == undefined)
+    {
+        console.log('processMarkerData(): Element does not include any markers, aborting..');
+        return;
+    }
+
     // early grouping work, just create an entity group for each entity
     var grp = new Cesium.EntityCollection();
 
@@ -1448,9 +1579,36 @@ function processPolylineData(description, sourceElement)
 
         var _material = null;
         var _col = new Cesium.Color();
+        var clampToGround = false;
 
-        if('default_colour' in sourceElement)
+        if('override_colour' in sourceElement)
         {
+            console.log('Setting polyline colour from source element: ' + sourceElement.default_colour);
+            // var col = new Cesium.Color();
+
+            // _material = new Cesium.Material.fromType('Color');
+            // _material.uniforms.color = Cesium.Color.fromBytes(
+            Cesium.Color.fromBytes(
+                sourceElement.override_colour[0],
+                sourceElement.override_colour[1],
+                sourceElement.override_colour[2],
+                sourceElement.override_colour[3],
+                _col);
+        }
+        else if('rgb' in geometry)
+        {
+            console.log('Setting polyline colour from vector file: ' + geometry.rgb);
+
+            Cesium.Color.fromBytes(
+                geometry.rgb[0],
+                geometry.rgb[1],
+                geometry.rgb[2],
+                255,
+                _col);
+        }
+        else if('default_colour' in sourceElement)
+        {
+            console.log('Setting polyline colour from source element: ' + sourceElement.default_colour);
             // var col = new Cesium.Color();
 
             // _material = new Cesium.Material.fromType('Color');
@@ -1464,7 +1622,14 @@ function processPolylineData(description, sourceElement)
         }
         else
         {
+            console.log('No colour specified for polyline, using default');
+
             _col = Cesium.Color.BLUE;
+        }
+
+        if('clamp_to_ground' in sourceElement)
+        {
+            clampToGround = sourceElement.clamp_to_ground;
         }
 
         // avgLong /= polyline.lines.length;
@@ -1480,7 +1645,7 @@ function processPolylineData(description, sourceElement)
                 width: lineWidth,
                 material: _col,
                 // material: Cesium.Color.BLUE,
-                clampToGround: true
+                clampToGround: clampToGround
             },
             show : true
         });
@@ -1988,7 +2153,7 @@ async function startup()
 
    // create a Cesium viewer and load Earth data
 
-    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0ZDgyMmRiYS0zMjMyLTQxMzMtYTNiMC05ZmZiZTRkZWQ2YTQiLCJpZCI6ODMyMywic2NvcGVzIjpbImFzciIsImdjIl0sImlhdCI6MTU1MTc1MzAzNX0.wDKGdaNCaseIbASuOFeSRdXF-Ch4uGfMQdeVBKTCzNU';
+    // Cesium.Ion.defaultAccessToken = '' // replace when possible
 
     viewer = new Cesium.Viewer('cesiumContainer', 
         {
@@ -2006,7 +2171,10 @@ async function startup()
     // load imagery
     var imageryLayer = viewer.imageryLayers.addImageryProvider(
         // new Cesium.IonImageryProvider({ assetId: 3813 })
-        new Cesium.IonImageryProvider({ assetId: 3954 })
+        // new Cesium.IonImageryProvider({ assetId: 3954 })
+        new Cesium.BingMapsImageryProvider(
+            imageryProviderProperties   // this should be in imagery.js - typical properties 'url', 'key', 'mapStyle'
+        )
     );
 
     weatherCtr = document.getElementById("weatherReadout");
@@ -2340,6 +2508,15 @@ async function startup()
     {
         updateFromTime(clock);
     });
+
+    // disable depth testing vs. terrain for now, as it is possibly hiding some custom 3d tiles content
+    // TODO: re-enable this after the models are fixed :)
+    // viewer.scene.globe.depthTestAgainstTerrain = false;
+    // viewer.extend(Cesium.viewerCesium3DTilesInspectorMixin);
+    // from https://github.com/CesiumGS/cesium/issues/3279 - workaround for blurry imagery layers at high zoom
+    // console.log('Disabling FXAA and reducing maximum screen space error as a workaround for blurry images, remove this when not needed..');
+    // viewer.scene.globe.maximumScreenSpaceError = 1.33;
+    // viewer.scene.postProcessStages.fxaa.enabled = false;
 }
 
 function updatePreviewEntity(time, result)
