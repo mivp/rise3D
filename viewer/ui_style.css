@@ -170,8 +170,10 @@ li {
     user-select: none;
     text-align: center;
     line-height:40px;
-    margin-top: 1px;
+    margin-top: 4px;
     font-weight: 400;
+    border: 1px dotted grey;
+    color: grey;
 }
 .groupsTable_leafCell:hover{
     font-weight: 800;
@@ -512,7 +514,7 @@ li {
     width:45%;
     height:30px;
     border: 1px solid white;
-    border-radius:5px;
+    border-radius:3px;
     line-height: 30px;
     text-align: center;
     cursor: default;

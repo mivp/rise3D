@@ -33,18 +33,23 @@ function viewModel() {
         var incominginfolayers = data.datagroups;
 
        for(var i = 0; i < incominginfolayers.length; i++){
-            currentElement = incominginfolayers[i];
+            var currentElement = incominginfolayers[i];
             currentElement = self.convertToObservableElement(currentElement);
-            
+
             for(var j = 0; j < incominginfolayers[i].children.length; j ++){
-                currentElement.children.push(self.convertToObservableElement(incominginfolayers[i].children[j]));
+                   
+                    currentElement.children.push(self.convertToObservableElement(incominginfolayers[i].children[j]));
+         //       //console.log(incominginfolayers[i].children[j])
                 for(var k = 0; k < incominginfolayers[i].children[j].children.length; k ++){
-                    currentElement.children[j].children[k].push(self.convertToObservableElement( incominginfolayers[i].children[j].children[k]));
+                    //console.log(incominginfolayers[i].children[j].children[k])
+                 
+                        currentElement.children[j].children[k].push(self.convertToObservableElement( incominginfolayers[i].children[j].children[k]));
                 }
             }
+            
             self.infoLayers_2.push(currentElement);
         }
-      
+       
         //spatial Layers 2
         var incomingSpatialLayers = data.spatial_layers;
         for(var i = 0; i < incomingSpatialLayers.length; i++){
@@ -78,6 +83,7 @@ function viewModel() {
         return returnee;
     };
     self.addInfoLayer = function(layer){
+        
         self.infoLayers.push( { name: layer.name, tags: layer.tags, children: ko.observableArray() });
     };
 
@@ -108,14 +114,23 @@ function viewModel() {
         if(tag.indexOf("wellbeing")>0){
             console.log("wellbeing");
         }
+        console.log(tag)
         var parent = self.tagExistsInLayers(tag);
         if(parent!=null) 
         {
+           
             // parent.children.push({ 'name':name, 'tag':tag, 'isActive': ko.observable(true), 'isLocked':false, 'hasChildren':false });
             // parent.children.push({ 'name':name, 'tag':tag, 'isActive': ko.observable(true), 'isLocked':locked, 'hasChildren':false });
-            parent.children.push({ 'name':name, 'tag':tag, 'isActive': ko.observable(selected), 'isLocked':locked, 'hasChildren':false });
+            var obj = { 'name':name, 'tag':tag, 'isActive': ko.observable(selected), 'isLocked':locked, 'hasChildren':false }
+            if(!containsObjectName(name,parent.children() )){
+                console.log("QQQQQQ" + name);
+                parent.children.push({ 'name':name, 'tag':tag, 'isActive': ko.observable(selected), 'isLocked':locked, 'hasChildren':false });
+                //console.log(parent.children().length);
+            } else {
+                console.log("Duplicate: " + name);
+            }
         } else {
-            console.log("Did not insert child " + name + " cause tag: " + tag + " does not exist in info layers.");
+            console.log("Did not insert child because tag: " + tag + " does not exist in info layers.");
         }
  
       //  console.log(self.infoLayers_2());
@@ -123,7 +138,19 @@ function viewModel() {
         //self.infoLayers()[layerIndex].children.push({"name" : name, "isActive": ko.observable(displayAtstartup), "isLocked": ko.observable(locked)});
         
     }
+    
+    function containsObjectName(name, list) {
+       
+     
+        for(var i =0;i < list.length; i++){
+            if(list[i].name==name){
+                //console.log("QQQQ" + name + "   already there")
+                return true;
+            }
+        }
 
+        return false;
+    }
     self.tagExistsInLayers = function(tag){
         for(var i = 0; i < self.infoLayers_2().length; i ++){
             var el = self.infoLayers_2()[i];
@@ -292,6 +319,7 @@ function processSceneData(data)
         console.log("processSceneData()");
         console.log(data);
         var g_sceneData = JSON.parse(data);
+   
         var i = 0;
         
         updateProgressDisplay(0, i, g_sceneData.elements.length)
@@ -322,12 +350,12 @@ function processSceneData(data)
                 }
                 else if(element.datatype == "polylines")
                 {
-                    console.log('Found polylines scene element, loading..');
+   //                 console.log('Found polylines scene element, loading..');
                     await loadPolylineData(element);
                 }
                 else if(element.datatype == "markers")
                 {
-                    console.log('Found markers scene element, loading..');
+     //               console.log('Found markers scene element, loading..');
                     await loadMarkerData(element);
                 }
                 else
@@ -1597,7 +1625,7 @@ function processPolylineData(description, sourceElement)
         }
         else if('rgb' in geometry)
         {
-            console.log('Setting polyline colour from vector file: ' + geometry.rgb);
+       //     console.log('Setting polyline colour from vector file: ' + geometry.rgb);
 
             Cesium.Color.fromBytes(
                 geometry.rgb[0],
@@ -1608,7 +1636,7 @@ function processPolylineData(description, sourceElement)
         }
         else if('default_colour' in sourceElement)
         {
-            console.log('Setting polyline colour from source element: ' + sourceElement.default_colour);
+      //      console.log('Setting polyline colour from source element: ' + sourceElement.default_colour);
             // var col = new Cesium.Color();
 
             // _material = new Cesium.Material.fromType('Color');
@@ -1622,7 +1650,7 @@ function processPolylineData(description, sourceElement)
         }
         else
         {
-            console.log('No colour specified for polyline, using default');
+      //      console.log('No colour specified for polyline, using default');
 
             _col = Cesium.Color.BLUE;
         }
@@ -2221,7 +2249,11 @@ async function startup()
         {
             showDefault = false;
         }
-        ko_viewModel.addChildToLayer(g_koPolylinelist[i].tag, g_koPolylinelist[i].name, !g_koPolylinelist[i].availability, showDefault);
+        //NH: Info_vector Tag hack
+      //  if(g_koPolylinelist[i].tag.indexOf("info_vector")>=0){
+     //       console.log("WWWWW" + g_koPolylinelist[i].tag)
+            ko_viewModel.addChildToLayer(g_koPolylinelist[i].tag, g_koPolylinelist[i].name, !g_koPolylinelist[i].availability, showDefault);
+     //   }
     }
 
     document.getElementById('loaderProgressDisplay').style.display = 'none';
